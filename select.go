@@ -20,67 +20,6 @@ const (
 	Desc
 )
 
-type PaginatorType int
-
-const (
-	PaginatorTypeUndefined PaginatorType = iota
-	PaginatorTypeByPage
-	PaginatorTypeByID
-)
-
-// Paginator is a helper object to paginate results.
-type Paginator struct {
-	limit  uint64
-	page   uint64
-	lastID int64
-	pType  PaginatorType
-}
-
-// PaginatorByPage creates a new Paginator for pagination by page.
-func PaginatorByPage(pageSize, pageNum uint64) Paginator {
-	return Paginator{
-		limit:  pageSize,
-		page:   pageNum,
-		lastID: 0,
-		pType:  PaginatorTypeByPage,
-	}
-}
-
-// PaginatorByID creates a new Paginator for pagination by ID.
-func PaginatorByID(limit uint64, lastID int64) Paginator {
-	return Paginator{
-		limit:  limit,
-		page:   0,
-		lastID: lastID,
-		pType:  PaginatorTypeByID,
-	}
-}
-
-// PageSize returns the page size for PaginatorTypeByPage.
-func (p Paginator) PageSize() uint64 {
-	return p.limit
-}
-
-// PageNumber returns the page number for PaginatorTypeByPage.
-func (p Paginator) PageNumber() uint64 {
-	return p.page
-}
-
-// Limit returns the limit for PaginatorTypeByID.
-func (p Paginator) Limit() uint64 {
-	return p.limit
-}
-
-// LastID returns the last ID for PaginatorTypeByID.
-func (p Paginator) LastID() int64 {
-	return p.lastID
-}
-
-// Type returns the type of the paginator.
-func (p Paginator) Type() PaginatorType {
-	return p.pType
-}
-
 // String returns the string representation of the direction.
 func (d Direction) String() string {
 	if d == Asc {
@@ -109,8 +48,6 @@ type selectData struct {
 	Limit             string
 	Offset            string
 	Suffixes          []Sqlizer
-	Paginator         Paginator
-	IDColumn          string // ID column name. Required for pagination by ID.
 }
 
 func (d *selectData) ToSql() (sqlStr string, args []any, err error) {
@@ -166,32 +103,13 @@ func (d *selectData) writeJoins(sql *bytes.Buffer, args []any) ([]any, error) {
 	return appendToSql(d.Joins, sql, " ", args)
 }
 
-func (d *selectData) buildWhereParts() ([]Sqlizer, error) {
-	whereParts := make([]Sqlizer, 0, len(d.WhereParts)+1)
-	whereParts = append(whereParts, d.WhereParts...)
-
-	if d.Paginator.pType == PaginatorTypeByID {
-		if d.IDColumn == "" {
-			return nil, errors.New("IDColumn is required for pagination by ID")
-		}
-		whereParts = append(whereParts, Gt{d.IDColumn: d.Paginator.lastID})
-	}
-
-	return whereParts, nil
-}
-
 func (d *selectData) writeWhereClause(sql *bytes.Buffer, args []any) ([]any, error) {
-	whereParts, err := d.buildWhereParts()
-	if err != nil {
-		return nil, err
-	}
-
-	if len(whereParts) == 0 {
+	if len(d.WhereParts) == 0 {
 		return args, nil
 	}
 
 	_, _ = sql.WriteString(" WHERE ")
-	return appendToSql(whereParts, sql, " AND ", args)
+	return appendToSql(d.WhereParts, sql, " AND ", args)
 }
 
 func (d *selectData) writeGroupByClause(sql *bytes.Buffer) {
@@ -219,37 +137,15 @@ func (d *selectData) writeOrderByClause(sql *bytes.Buffer, args []any) ([]any, e
 	return appendToSql(d.OrderByParts, sql, ", ", args)
 }
 
-func (d *selectData) writeLimitOffset(sql *bytes.Buffer) error {
+func (d *selectData) writeLimitOffset(sql *bytes.Buffer) {
 	if d.Limit != "" {
-		if d.Paginator.pType != PaginatorTypeUndefined {
-			return errors.New("limit and paginator cannot be used together")
-		}
 		_, _ = sql.WriteString(" LIMIT ")
 		_, _ = sql.WriteString(d.Limit)
 	}
 
 	if d.Offset != "" {
-		if d.Paginator.pType != PaginatorTypeUndefined {
-			return errors.New("offset and paginator cannot be used together")
-		}
 		_, _ = sql.WriteString(" OFFSET ")
 		_, _ = sql.WriteString(d.Offset)
-	}
-
-	return nil
-}
-
-func (d *selectData) writePagination(sql *bytes.Buffer) {
-	switch d.Paginator.pType {
-	case PaginatorTypeUndefined:
-		// No pagination
-	case PaginatorTypeByPage:
-		_, _ = fmt.Fprintf(sql, " LIMIT %d", d.Paginator.limit)
-		if d.Paginator.page > 1 {
-			_, _ = fmt.Fprintf(sql, " OFFSET %d", d.Paginator.limit*(d.Paginator.page-1))
-		}
-	case PaginatorTypeByID:
-		_, _ = fmt.Fprintf(sql, " LIMIT %d", d.Paginator.limit)
 	}
 }
 
@@ -299,11 +195,7 @@ func (d *selectData) toSqlRaw() (sqlStr string, args []any, err error) {
 		return "", nil, err
 	}
 
-	if err := d.writeLimitOffset(sql); err != nil {
-		return "", nil, err
-	}
-
-	d.writePagination(sql)
+	d.writeLimitOffset(sql)
 
 	if args, err = d.writeSuffixes(sql, args); err != nil {
 		return "", nil, err
@@ -548,50 +440,6 @@ func (b SelectBuilder) OrderByCond(columns map[int]string, conds []OrderCond, op
 	}
 
 	return b
-}
-
-// Search adds a search condition to the query.
-// The search condition is a WHERE clause with LIKE expressions. All columns will be converted to text.
-// value can be a string or a number.
-func (b SelectBuilder) Search(value any, columns ...string) SelectBuilder {
-	if len(columns) == 0 {
-		return b
-	}
-
-	search := Or{}
-	for _, column := range columns {
-		search = append(search, Like{column + "::text": fmt.Sprintf("%%%v%%", value)})
-	}
-
-	return b.Where(search)
-}
-
-// PaginateByID adds a LIMIT and start from ID condition to the query.
-// WARNING: The columnID must be included in the ORDER BY clause to avoid unexpected results!
-func (b SelectBuilder) PaginateByID(limit uint64, startID int64, columnID string) SelectBuilder {
-	return b.Limit(limit).Where(Gt{columnID: startID})
-}
-
-// PaginateByPage adds a LIMIT and OFFSET condition to the query.
-// WARNING: query must be ordered to avoid unexpected results!
-func (b SelectBuilder) PaginateByPage(limit, page uint64) SelectBuilder {
-	sb := b.Limit(limit)
-	if page > 1 {
-		sb = sb.Offset(limit * (page - 1))
-	}
-
-	return sb
-}
-
-// Paginate adds pagination conditions to the query.
-func (b SelectBuilder) Paginate(p Paginator) SelectBuilder {
-	return builder.Set(b, "Paginator", p).(SelectBuilder)
-}
-
-// SetIDColumn sets the column name to be used for pagination by ID.
-// Required in special cases when Paginate function combined with PaginatorByID.
-func (b SelectBuilder) SetIDColumn(column string) SelectBuilder {
-	return builder.Set(b, "IDColumn", column).(SelectBuilder)
 }
 
 // Limit sets a LIMIT clause on the query.

@@ -76,7 +76,6 @@ INSERT INTO orders (user_id, amount, state) VALUES
 				sq.Like{"u.email": "%example.com"},
 			},
 		}).
-		Search("example.com", "u.email").
 		GroupBy("u.id", "u.name", "os.total_amount", "os.paid_count", "u.status").
 		Having(sq.Expr("COUNT(o.id) >= ?", 1)).
 		OrderBy("total_amount DESC", "u.id").
@@ -317,7 +316,6 @@ INSERT INTO user_groups_all (user_id, group_id) VALUES
 			refundedExists,
 			noChargebacks,
 		}).
-		Search("example.com", "au.email", "au.name").
 		GroupBy(
 			"au.id",
 			"au.name",
@@ -395,43 +393,6 @@ INSERT INTO user_groups_all (user_id, group_id) VALUES
 
 	cleanedIDs, _ := queryInt64StringPairs(t, pool, ctx, builderResetQuery)
 	assert.Len(t, cleanedIDs, 4)
-
-	paginateByID := sq.Select("id").
-		From("users_all").
-		OrderBy("id").
-		PaginateByID(2, 1, "id").
-		PlaceholderFormat(sq.Dollar)
-
-	pageByID := queryInt64s(t, pool, ctx, paginateByID)
-	assert.Equal(t, []int64{2, 3}, pageByID)
-
-	paginateByPage := sq.Select("id").
-		From("users_all").
-		OrderBy("id").
-		PaginateByPage(2, 2).
-		PlaceholderFormat(sq.Dollar)
-
-	pageByPage := queryInt64s(t, pool, ctx, paginateByPage)
-	assert.Equal(t, []int64{3, 4}, pageByPage)
-
-	paginateByPaginator := sq.Select("id").
-		From("users_all").
-		OrderBy("id").
-		Paginate(sq.PaginatorByID(2, 1)).
-		SetIDColumn("id").
-		PlaceholderFormat(sq.Dollar)
-
-	pageByPaginator := queryInt64s(t, pool, ctx, paginateByPaginator)
-	assert.Equal(t, []int64{2, 3}, pageByPaginator)
-
-	paginateByPagePaginator := sq.Select("id").
-		From("users_all").
-		OrderBy("id").
-		Paginate(sq.PaginatorByPage(2, 2)).
-		PlaceholderFormat(sq.Dollar)
-
-	pageByPagePaginator := queryInt64s(t, pool, ctx, paginateByPagePaginator)
-	assert.Equal(t, []int64{3, 4}, pageByPagePaginator)
 
 	recursiveQuery := sq.WithRecursive("category_tree").As(
 		sq.Select("id", "name").
