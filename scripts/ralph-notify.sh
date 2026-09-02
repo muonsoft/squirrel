@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -gt 1 ]]; then
-  echo "usage: $0 [MESSAGE]; with no argument, read MESSAGE from stdin" >&2
+  echo "usage: $0 [MESSAGE]; local fallback only, read MESSAGE from stdin when omitted" >&2
   exit 64
 fi
 
@@ -21,34 +21,7 @@ timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 printf '[%s] %s\n' "$timestamp" "$message" >>"$repo_root/var/ralph-notifications.log"
 printf '\n[ralph notify]\n%s\n\n' "$message" >&2
 
-external_ok=0
-external_attempted=0
-if [[ -n "${RALPH_NOTIFY_CMD:-}" ]]; then
-  external_attempted=1
-  if [[ ! -x "$RALPH_NOTIFY_CMD" ]]; then
-    echo "RALPH_NOTIFY_CMD is not executable: $RALPH_NOTIFY_CMD" >&2
-    external_ok=1
-  elif ! printf '%s\n' "$message" | "$RALPH_NOTIFY_CMD"; then
-    echo "external notification command failed" >&2
-    external_ok=1
-  fi
-elif command -v notify-send >/dev/null 2>&1 && [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; then
-  external_attempted=1
-  if ! notify-send "muonsoft/squirrel Ralph" "$message"; then
-    external_ok=1
-  fi
-fi
-
-case "${RALPH_REQUIRE_EXTERNAL_NOTIFY:-0}" in
-  1|true|TRUE|yes|YES)
-    if (( ! external_attempted )); then
-      echo "external notification is required but not configured" >&2
-      exit 1
-    fi
-    exit "$external_ok"
-    ;;
-esac
-
-# The durable local log is the default notification channel. External delivery is an
-# optional additional channel unless RALPH_REQUIRE_EXTERNAL_NOTIFY is enabled.
+# Story notifications are delivered by the Cursor process through AgentMem MCP. This
+# script intentionally provides only a durable local fallback for outer-loop failures
+# where no healthy agent remains to invoke an MCP tool.
 exit 0

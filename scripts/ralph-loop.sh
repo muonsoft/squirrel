@@ -24,6 +24,16 @@ else
   exit 1
 fi
 
+if ! agentmem_tools=$("$resolved_agent" mcp list-tools agentmem 2>&1); then
+  echo "AgentMem MCP is unavailable; fix 'agent mcp list' before starting Ralph" >&2
+  echo "$agentmem_tools" >&2
+  exit 1
+fi
+if [[ "$agentmem_tools" != *"notify.send"* ]]; then
+  echo "AgentMem MCP does not expose required tool notify.send" >&2
+  exit 1
+fi
+
 if [[ -n "${AGENT_ARGS:-}" ]]; then
   # Intentional simple whitespace splitting. Use a wrapper in AGENT_BIN for arguments
   # that themselves contain spaces.
@@ -52,6 +62,8 @@ Use the autonomous skill at `.agents/skills/squirrel-next-task/SKILL.md` in mode
 Take exactly one eligible story from `IMPLEMENTATION_TRACKER.md`, implement it, run all
 of its required verification, make its one atomic local commit, notify, and always
 write `var/loop-status.txt` using the skill contract before exiting. Do not push.
+Send the status notification through AgentMem MCP tool `notify.send`; do not replace it
+with a webhook or shell notifier.
 Do not call AskQuestion, SwitchMode, enter plan-only mode, or wait for user input.
 Resolve routine choices from `AGENTS.md`, `docs/FOUNDATION.md`, the implementation spec,
 the tracker story, and `UPSTREAM.md`. Stop with the documented status if those sources
@@ -98,14 +110,14 @@ for ((iteration = 1; iteration <= max_iterations; iteration++)); do
   decoder_rc=${pipeline_status[2]}
 
   if [[ ! -f "$status_file" ]]; then
-    scripts/ralph-notify.sh "muonsoft/squirrel: infrastructure error; iteration $iteration did not create var/loop-status.txt" || true
+    scripts/ralph-notify.sh "muonsoft/squirrel: local fallback; iteration $iteration did not create var/loop-status.txt" || true
     echo "agent did not create $status_file (agent exit $agent_rc)" >&2
     exit 3
   fi
 
   loop_value=$(awk -F': ' '/^Loop:/{print $2; exit}' "$status_file" | tr -d '\r')
   if [[ -z "$loop_value" ]]; then
-    scripts/ralph-notify.sh "muonsoft/squirrel: infrastructure error; status file has no Loop field" || true
+    scripts/ralph-notify.sh "muonsoft/squirrel: local fallback; status file has no Loop field" || true
     echo "status file has no Loop value" >&2
     exit 3
   fi
@@ -152,6 +164,6 @@ for ((iteration = 1; iteration <= max_iterations; iteration++)); do
   esac
 done
 
-scripts/ralph-notify.sh "muonsoft/squirrel: RALPH_MAX=$max_iterations reached without completion or gate" || true
+scripts/ralph-notify.sh "muonsoft/squirrel: local fallback; RALPH_MAX=$max_iterations reached without completion or gate" || true
 echo "RALPH_MAX=$max_iterations reached without completion or gate" >&2
 exit 4

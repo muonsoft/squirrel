@@ -7,6 +7,7 @@ not resume chats and it never performs more than one story in a process.
 
 - Bash, Python 3, `tee`, `awk`, Git, Go, and Cursor Agent CLI (`agent` preferred).
 - Cursor authentication (`agent status`) and access to model `composer-2.5`.
+- Connected Cursor MCP server `agentmem` exposing `notify.send`.
 - Docker Compose or `POSTGRES_TEST_DSN` before PostgreSQL-required stories.
 - A clean local branch based on the prepared repository. The loop commits but never
   pushes.
@@ -37,19 +38,24 @@ interactive chat and the next iteration will never start.
 | `RALPH_UNATTENDED` | `0` | `1/true/yes` bypasses milestone pauses, never hard blockers |
 | `AGENT_BIN` | first `agent`, then `cursor` | Cursor Agent executable |
 | `AGENT_ARGS` | arguments above | Full whitespace-split override; use a wrapper for embedded spaces |
-| `RALPH_NOTIFY_CMD` | unset | Optional executable receiving notification text on stdin |
-| `RALPH_REQUIRE_EXTERNAL_NOTIFY` | `0` | Fail notification if no external channel succeeds |
 
-The always-available notification channel is `var/ralph-notifications.log` plus the
-terminal. For Telegram, Slack, or another service, point `RALPH_NOTIFY_CMD` to an
-executable wrapper that reads stdin and keeps its token outside the repository.
+Each Cursor process sends its story status through AgentMem MCP tool `notify.send` with
+title `muonsoft/squirrel Ralph` and `silent: false`. Verify availability with:
+
+```bash
+agent mcp list
+agent mcp list-tools agentmem
+```
+
+`var/ralph-notifications.log` and the terminal are local fallbacks only for failures of
+the outer Bash loop where no healthy Cursor process remains to invoke AgentMem.
 
 ## Exit codes
 
 | Code | Meaning | Operator action |
 |---:|---|---|
 | 0 | Backlog completed and TASK-018 verified `v0.1.0` | Review local tag and push explicitly if desired |
-| 1 | Invalid setup or missing CLI | Fix environment and rerun |
+| 1 | Invalid setup, missing CLI, or unavailable AgentMem `notify.send` | Fix environment and rerun |
 | 2 | Human milestone or documented blocker | Read `var/loop-status.txt`, fix/approve, rerun |
 | 3 | Missing/invalid status or agent/logging protocol failure | Inspect status and raw NDJSON |
 | 4 | `RALPH_MAX` reached without completion/gate | Inspect tracker, increase limit if healthy |
@@ -61,7 +67,7 @@ the next eligible story is selected; an interrupted `IN_PROGRESS` story is resum
 
 - Status contract: `var/loop-status.txt` (deleted before every iteration).
 - Raw Cursor NDJSON: `var/ralph/<UTC-run-id>/iter-NNN.ndjson`.
-- Durable local notifications: `var/ralph-notifications.log`.
+- Outer-loop fallback alerts: `var/ralph-notifications.log`.
 - Console: decoded live assistant/tool progress.
 
 All `var/` artifacts are ignored by Git. Do not treat a missing status file as success;

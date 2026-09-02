@@ -71,10 +71,11 @@ Ralph mode is active when the invocation prompt says `mode ralph`.
 
 Never emit `CONTINUE` in Ralph mode.
 
-## Notify and write status
+## Notify through AgentMem and write status
 
-Before exiting Ralph mode, always notify and then atomically write
-`var/loop-status.txt`. Keep notes to one line and never include secrets or SQL args.
+Before exiting Ralph mode, always notify through the configured `agentmem` MCP server
+and then atomically write `var/loop-status.txt`. Keep notes to one line and never
+include secrets or SQL args.
 
 Build a message no longer than 1500 characters:
 
@@ -86,8 +87,20 @@ Next: <next ID or —>
 Notes: <one line>
 ```
 
-Send it with `scripts/ralph-notify.sh "$message"`. Record `sent` if the command
-succeeds and `failed` if it fails. Then call:
+Call AgentMem MCP tool `notify.send` exactly once with:
+
+```json
+{
+  "title": "muonsoft/squirrel Ralph",
+  "message": "<message above>",
+  "silent": false
+}
+```
+
+Do not substitute a webhook, desktop notification, or shell command for this MCP call.
+Record `sent` only when the tool reports success; otherwise record `failed`. Do not
+retry a failed call in the same process because delivery may have succeeded before the
+error was returned. Then call:
 
 ```bash
 scripts/ralph-status.sh \
@@ -97,7 +110,8 @@ scripts/ralph-status.sh \
 
 The status must reflect the actual tracker/commit state. Write it even when stopped.
 If implementation tools fail, use remaining shell capability to write the status before
-returning. `NOTIFY: skipped` is not valid in Ralph mode.
+returning. A notification failure does not falsify a completed story, but it must be
+visible as `NOTIFY: failed`. `NOTIFY: skipped` is not valid in Ralph mode.
 
 In non-Ralph manual use, execute/commit one story and report normally; the status file
 and notification contract are optional unless the caller requests them.
