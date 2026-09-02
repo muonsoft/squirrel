@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:18.1
+    environment:
+      POSTGRES_USER: squirrel
+      POSTGRES_PASSWORD: squirrel
+      POSTGRES_DB: squirrel_test
+    ports:
+      - "54329:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U squirrel -d squirrel_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

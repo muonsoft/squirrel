@@ -1,18 +1,14 @@
-//go:build itest
-
-package itests
+package integration
 
 import (
 	"testing"
 
-	"github.com/georgysavva/scany/v2/pgxscan"
 	sq "github.com/muonsoft/squirrel"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestWriteBuildersWithReturning(t *testing.T) {
-	t.Parallel()
 
 	pool, ctx := newTestPool(t)
 	setupSQL := `
@@ -55,9 +51,7 @@ CREATE TABLE archived_products (
 		Stock int    `db:"stock"`
 	}
 
-	var products []productRow
-	err = pgxscan.Select(ctx, pool, &products, sql, args...)
-	require.NoError(t, err)
+	products := selectRows[productRow](t, pool, ctx, sql, args...)
 	require.Len(t, products, 3)
 
 	productIDs := make(map[string]int64, len(products))
@@ -98,9 +92,7 @@ CREATE TABLE archived_products (
 		Stock int   `db:"stock"`
 	}
 
-	var updates []updatedRow
-	err = pgxscan.Select(ctx, pool, &updates, sql, args...)
-	require.NoError(t, err)
+	updates := selectRows[updatedRow](t, pool, ctx, sql, args...)
 
 	updated := make(map[int64]int, len(updates))
 	for _, update := range updates {
@@ -129,9 +121,7 @@ CREATE TABLE archived_products (
 	_, err = pool.Exec(ctx, sql, args...)
 	require.NoError(t, err)
 
-	var archivedCount int
-	err = pgxscan.Get(ctx, pool, &archivedCount, "SELECT COUNT(*) FROM archived_products")
-	require.NoError(t, err)
+	archivedCount := queryScalar[int](t, pool, ctx, "SELECT COUNT(*) FROM archived_products")
 	assert.Equal(t, 1, archivedCount)
 
 	deleteTarget := sq.Select("id").
@@ -148,15 +138,10 @@ CREATE TABLE archived_products (
 	sql, args, err = deleteQuery.ToSql()
 	require.NoError(t, err)
 
-	var deletedID int64
-	err = pgxscan.Get(ctx, pool, &deletedID, sql, args...)
-	require.NoError(t, err)
-
+	deletedID := queryScalar[int64](t, pool, ctx, sql, args...)
 	assert.Equal(t, productIDs["Legacy"], deletedID)
 
-	var remaining int
-	err = pgxscan.Get(ctx, pool, &remaining, "SELECT COUNT(*) FROM products WHERE id = $1", deletedID)
-	require.NoError(t, err)
+	remaining := queryScalar[int](t, pool, ctx, "SELECT COUNT(*) FROM products WHERE id = $1", deletedID)
 	assert.Equal(t, 0, remaining)
 
 	insertMapped := sq.Insert("products").
@@ -178,9 +163,7 @@ CREATE TABLE archived_products (
 		Stock int    `db:"stock"`
 	}
 
-	var mapped mappedProduct
-	err = pgxscan.Get(ctx, pool, &mapped, sql, args...)
-	require.NoError(t, err)
+	mapped := selectOneRow[mappedProduct](t, pool, ctx, sql, args...)
 
 	assert.NotZero(t, mapped.ID)
 	assert.Equal(t, "Refill", mapped.Name)

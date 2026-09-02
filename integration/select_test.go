@@ -1,18 +1,14 @@
-//go:build itest
-
-package itests
+package integration
 
 import (
 	"testing"
 
-	"github.com/georgysavva/scany/v2/pgxscan"
 	sq "github.com/muonsoft/squirrel"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSelectBuilderComplexQuery(t *testing.T) {
-	t.Parallel()
 
 	pool, ctx := newTestPool(t)
 	setupSQL := `
@@ -104,9 +100,7 @@ INSERT INTO orders (user_id, amount, state) VALUES
 		OrdersCount int64   `db:"orders_count"`
 	}
 
-	var results []selectResult
-	err = pgxscan.Select(ctx, pool, &results, sql, args...)
-	require.NoError(t, err)
+	results := selectRows[selectResult](t, pool, ctx, sql, args...)
 
 	expected := []selectResult{
 		{
@@ -142,7 +136,6 @@ INSERT INTO orders (user_id, amount, state) VALUES
 }
 
 func TestSelectBuilderAllConstructs(t *testing.T) {
-	t.Parallel()
 
 	pool, ctx := newTestPool(t)
 	setupSQL := `
@@ -369,9 +362,7 @@ INSERT INTO user_groups_all (user_id, group_id) VALUES
 		AvgAmount     float64 `db:"avg_amount"`
 	}
 
-	var results []selectResult
-	err = pgxscan.Select(ctx, pool, &results, sql, args...)
-	require.NoError(t, err)
+	results := selectRows[selectResult](t, pool, ctx, sql, args...)
 	require.Len(t, results, 1)
 
 	got := results[0]

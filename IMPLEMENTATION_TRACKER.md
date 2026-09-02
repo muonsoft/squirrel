@@ -23,7 +23,7 @@ Allowed values: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`.
 |---|---|---|---:|---|
 | TASK-001 | DONE | — | no | Capture reproducible baseline evidence |
 | TASK-002 | DONE | TASK-001 | no | Adopt muonsoft module identity and Go policy |
-| TASK-003 | TODO | TASK-002 | no | Isolate PostgreSQL integration module |
+| TASK-003 | DONE | TASK-002 | no | Isolate PostgreSQL integration module |
 | TASK-004 | TODO | TASK-003 | no | Remove search and pagination policy APIs |
 | TASK-005 | TODO | TASK-004 | no | Remove remaining application helpers |
 | TASK-006 | TODO | TASK-005 | no | Minimize root tests and dependencies |
