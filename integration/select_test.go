@@ -228,9 +228,9 @@ INSERT INTO user_groups_all (user_id, group_id) VALUES
 		Suffix(") ug_filter ON ug_filter.user_id = au.id")
 
 	statusCase := sq.Case("au.status").
-		When(sq.Expr("?", "active"), 1).
-		When(sq.Expr("?", "pending"), 2).
-		Else(0)
+		When(sq.Expr("?", "active"), "1").
+		When(sq.Expr("?", "pending"), "2").
+		Else("0")
 
 	displayName := sq.ConcatExpr(
 		"CONCAT(",

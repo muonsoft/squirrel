@@ -1,0 +1,168 @@
+func Alias func(e Sqlizer, a string) aliasExpr
+func Avg func(e Sqlizer) avgExpr
+func Case func(what ...any) CaseBuilder
+func Coalesce func(nullValue any, exprs ...Sqlizer) Sqlizer
+func ConcatExpr func(parts ...any) concatExpr
+func Count func(e Sqlizer) countExpr
+func Cte func(e Sqlizer, cte string) cteExpr
+func DebugSqlizer func(s Sqlizer) string
+func Delete func(from string) DeleteBuilder
+func Equal func(e Sqlizer, v any) equalExpr
+func Exists func(e Sqlizer) existsExpr
+func Expr func(sql string, args ...any) Sqlizer
+func Greater func(e Sqlizer, v any) greaterExpr
+func GreaterOrEqual func(e Sqlizer, v any) greaterOrEqualExpr
+func In func(column string, e any) inExpr
+func Insert func(into string) InsertBuilder
+func Less func(e Sqlizer, v any) lessExpr
+func LessOrEqual func(e Sqlizer, v any) lessOrEqualExpr
+func Max func(e Sqlizer) maxExpr
+func Min func(e Sqlizer) minExpr
+func Not func(e Sqlizer) Sqlizer
+func NotEqual func(e Sqlizer, v any) notEqualExpr
+func NotExists func(e Sqlizer) notExistsExpr
+func NotIn func(column string, e any) notInExpr
+func Placeholders func(count int) string
+func Range func(column string, start, end any) rangeExpr
+func Replace func(into string) InsertBuilder
+func Select func(columns ...string) SelectBuilder
+func Sum func(e Sqlizer) sumExpr
+func Update func(table string) UpdateBuilder
+func With func(cte string) CommonTableExpressionsBuilder
+func WithRecursive func(cte string) CommonTableExpressionsBuilder
+method (And) ToSql func() (sql string, args []any, err error)
+method (CaseBuilder) Else func(e any) CaseBuilder
+method (CaseBuilder) MustSql func() (sql string, args []any)
+method (CaseBuilder) ToSql func() (sql string, args []any, err error)
+method (CaseBuilder) When func(when, then any) CaseBuilder
+method (CommonTableExpressionsBuilder) As func(as Sqlizer) CommonTableExpressionsBuilder
+method (CommonTableExpressionsBuilder) Cte func(cte string) CommonTableExpressionsBuilder
+method (CommonTableExpressionsBuilder) Delete func(statement DeleteBuilder) CommonTableExpressionsBuilder
+method (CommonTableExpressionsBuilder) Insert func(statement InsertBuilder) CommonTableExpressionsBuilder
+method (CommonTableExpressionsBuilder) MustSql func() (sql string, args []any)
+method (CommonTableExpressionsBuilder) PlaceholderFormat func(f PlaceholderFormat) CommonTableExpressionsBuilder
+method (CommonTableExpressionsBuilder) Recursive func(recursive bool) CommonTableExpressionsBuilder
+method (CommonTableExpressionsBuilder) Replace func(statement InsertBuilder) CommonTableExpressionsBuilder
+method (CommonTableExpressionsBuilder) Select func(statement SelectBuilder) CommonTableExpressionsBuilder
+method (CommonTableExpressionsBuilder) ToSql func() (sql string, args []any, err error)
+method (CommonTableExpressionsBuilder) Update func(statement UpdateBuilder) CommonTableExpressionsBuilder
+method (DeleteBuilder) From func(from string) DeleteBuilder
+method (DeleteBuilder) Limit func(limit uint64) DeleteBuilder
+method (DeleteBuilder) MustSql func() (sql string, args []any)
+method (DeleteBuilder) Offset func(offset uint64) DeleteBuilder
+method (DeleteBuilder) OrderBy func(orderBys ...string) DeleteBuilder
+method (DeleteBuilder) PlaceholderFormat func(f PlaceholderFormat) DeleteBuilder
+method (DeleteBuilder) Prefix func(sql string, args ...any) DeleteBuilder
+method (DeleteBuilder) PrefixExpr func(e Sqlizer) DeleteBuilder
+method (DeleteBuilder) Suffix func(sql string, args ...any) DeleteBuilder
+method (DeleteBuilder) SuffixExpr func(e Sqlizer) DeleteBuilder
+method (DeleteBuilder) ToSql func() (sql string, args []any, err error)
+method (DeleteBuilder) Where func(pred any, args ...any) DeleteBuilder
+method (Eq) ToSql func() (sql string, args []any, err error)
+method (Gt) ToSql func() (sql string, args []any, err error)
+method (GtOrEq) ToSql func() (sql string, args []any, err error)
+method (ILike) ToSql func() (sql string, args []any, err error)
+method (InsertBuilder) Columns func(columns ...string) InsertBuilder
+method (InsertBuilder) Into func(from string) InsertBuilder
+method (InsertBuilder) MustSql func() (sql string, args []any)
+method (InsertBuilder) Options func(options ...string) InsertBuilder
+method (InsertBuilder) PlaceholderFormat func(f PlaceholderFormat) InsertBuilder
+method (InsertBuilder) Prefix func(sql string, args ...any) InsertBuilder
+method (InsertBuilder) PrefixExpr func(e Sqlizer) InsertBuilder
+method (InsertBuilder) Select func(sb SelectBuilder) InsertBuilder
+method (InsertBuilder) SetMap func(clauses map[string]any) InsertBuilder
+method (InsertBuilder) Suffix func(sql string, args ...any) InsertBuilder
+method (InsertBuilder) SuffixExpr func(e Sqlizer) InsertBuilder
+method (InsertBuilder) ToSql func() (sql string, args []any, err error)
+method (InsertBuilder) Values func(values ...any) InsertBuilder
+method (Like) ToSql func() (sql string, args []any, err error)
+method (Lt) ToSql func() (sql string, args []any, err error)
+method (LtOrEq) ToSql func() (sql string, args []any, err error)
+method (NotEq) ToSql func() (sql string, args []any, err error)
+method (NotILike) ToSql func() (sql string, args []any, err error)
+method (NotLike) ToSql func() (sql string, args []any, err error)
+method (Or) ToSql func() (sql string, args []any, err error)
+method (SelectBuilder) Column func(column any, args ...any) SelectBuilder
+method (SelectBuilder) Columns func(columns ...string) SelectBuilder
+method (SelectBuilder) CrossJoin func(join string, rest ...any) SelectBuilder
+method (SelectBuilder) Distinct func() SelectBuilder
+method (SelectBuilder) From func(from string) SelectBuilder
+method (SelectBuilder) FromSelect func(from SelectBuilder, alias string) SelectBuilder
+method (SelectBuilder) GroupBy func(groupBys ...string) SelectBuilder
+method (SelectBuilder) Having func(pred any, rest ...any) SelectBuilder
+method (SelectBuilder) InnerJoin func(join string, rest ...any) SelectBuilder
+method (SelectBuilder) Join func(join string, rest ...any) SelectBuilder
+method (SelectBuilder) JoinClause func(pred any, args ...any) SelectBuilder
+method (SelectBuilder) LeftJoin func(join string, rest ...any) SelectBuilder
+method (SelectBuilder) Limit func(limit uint64) SelectBuilder
+method (SelectBuilder) MustSql func() (sql string, args []any)
+method (SelectBuilder) Offset func(offset uint64) SelectBuilder
+method (SelectBuilder) Options func(options ...string) SelectBuilder
+method (SelectBuilder) OrderBy func(orderBys ...string) SelectBuilder
+method (SelectBuilder) OrderByClause func(pred any, args ...any) SelectBuilder
+method (SelectBuilder) PlaceholderFormat func(f PlaceholderFormat) SelectBuilder
+method (SelectBuilder) Prefix func(sql string, args ...any) SelectBuilder
+method (SelectBuilder) PrefixExpr func(e Sqlizer) SelectBuilder
+method (SelectBuilder) RemoveColumns func() SelectBuilder
+method (SelectBuilder) RemoveLimit func() SelectBuilder
+method (SelectBuilder) RemoveOffset func() SelectBuilder
+method (SelectBuilder) RightJoin func(join string, rest ...any) SelectBuilder
+method (SelectBuilder) Suffix func(sql string, args ...any) SelectBuilder
+method (SelectBuilder) SuffixExpr func(e Sqlizer) SelectBuilder
+method (SelectBuilder) ToSql func() (sql string, args []any, err error)
+method (SelectBuilder) Where func(pred any, args ...any) SelectBuilder
+method (SelectBuilder) With func(cteName string, cte SelectBuilder) SelectBuilder
+method (StatementBuilderType) Delete func(from string) DeleteBuilder
+method (StatementBuilderType) Insert func(into string) InsertBuilder
+method (StatementBuilderType) PlaceholderFormat func(f PlaceholderFormat) StatementBuilderType
+method (StatementBuilderType) Replace func(into string) InsertBuilder
+method (StatementBuilderType) Select func(columns ...string) SelectBuilder
+method (StatementBuilderType) Update func(table string) UpdateBuilder
+method (StatementBuilderType) Where func(pred any, args ...any) StatementBuilderType
+method (StatementBuilderType) With func(cte string) CommonTableExpressionsBuilder
+method (UpdateBuilder) From func(from string) UpdateBuilder
+method (UpdateBuilder) FromSelect func(from SelectBuilder, alias string) UpdateBuilder
+method (UpdateBuilder) Limit func(limit uint64) UpdateBuilder
+method (UpdateBuilder) MustSql func() (sql string, args []any)
+method (UpdateBuilder) Offset func(offset uint64) UpdateBuilder
+method (UpdateBuilder) OrderBy func(orderBys ...string) UpdateBuilder
+method (UpdateBuilder) PlaceholderFormat func(f PlaceholderFormat) UpdateBuilder
+method (UpdateBuilder) Prefix func(sql string, args ...any) UpdateBuilder
+method (UpdateBuilder) PrefixExpr func(e Sqlizer) UpdateBuilder
+method (UpdateBuilder) Set func(column string, value any) UpdateBuilder
+method (UpdateBuilder) SetMap func(clauses map[string]any) UpdateBuilder
+method (UpdateBuilder) Suffix func(sql string, args ...any) UpdateBuilder
+method (UpdateBuilder) SuffixExpr func(e Sqlizer) UpdateBuilder
+method (UpdateBuilder) Table func(table string) UpdateBuilder
+method (UpdateBuilder) ToSql func() (sql string, args []any, err error)
+method (UpdateBuilder) Where func(pred any, args ...any) UpdateBuilder
+type And conj
+type CaseBuilder builder.Builder
+type CommonTableExpressionsBuilder builder.Builder
+type DeleteBuilder builder.Builder
+type Eq map[string]any
+type Gt Lt
+type GtOrEq Lt
+type ILike Like
+type InsertBuilder builder.Builder
+type Like map[string]any
+type Lt map[string]any
+type LtOrEq Lt
+type NotEq Eq
+type NotILike Like
+type NotLike Like
+type Or conj
+type PlaceholderFormat interface {
+	ReplacePlaceholders(sql string) (string, error)
+}
+type SelectBuilder builder.Builder
+type Sqlizer interface {
+	ToSql() (string, []any, error)
+}
+type StatementBuilderType builder.Builder
+type UpdateBuilder builder.Builder
+var AtP 
+var Colon 
+var Dollar 
+var Question 
+var StatementBuilder 

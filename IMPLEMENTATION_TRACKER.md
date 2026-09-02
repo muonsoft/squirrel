@@ -27,7 +27,7 @@ Allowed values: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`.
 | TASK-004 | DONE | TASK-003 | no | Remove search and pagination policy APIs |
 | TASK-005 | DONE | TASK-004 | no | Remove remaining application helpers |
 | TASK-006 | DONE | TASK-005 | no | Minimize root tests and dependencies |
-| TASK-007 | TODO | TASK-006 | yes | Normalize Masterminds API compatibility |
+| TASK-007 | DONE | TASK-006 | yes | Normalize Masterminds API compatibility |
 | TASK-008 | TODO | TASK-007 | no | Add core nested-placeholder regressions |
 | TASK-009 | TODO | TASK-008 | no | Harden placeholder edges and errors |
 | TASK-010 | TODO | TASK-009 | no | Add placeholder fuzz tests |

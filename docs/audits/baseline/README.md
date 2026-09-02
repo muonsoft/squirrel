@@ -13,7 +13,8 @@ compatibility reference.
 
 Each line has the form `<kind> <name> <signature>` where `kind` is one of `const`,
 `func`, `method`, `type`, or `var`. Entries are sorted by kind, then name, then
-signature.
+signature. Multiline signatures (interfaces and structs) span multiple lines until the
+next entry.
 
 ## Regeneration
 
@@ -22,6 +23,7 @@ From the repository root:
 ```bash
 bash scripts/generate-api-inventory.sh v1.5.4 docs/audits/baseline/masterminds-v1.5.4-api.txt
 bash scripts/generate-api-inventory.sh upstream/n-r-w-v1.6.0 docs/audits/baseline/n-r-w-v1.6.0-api.txt
+go run ./tools/api-surface . > docs/audits/baseline/muonsoft-fork-api.txt
 ```
 
 The script uses `git archive` to extract non-test `*.go` sources at the requested ref,

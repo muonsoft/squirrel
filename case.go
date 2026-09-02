@@ -3,9 +3,6 @@ package squirrel
 import (
 	"bytes"
 	"errors"
-	"fmt"
-	"reflect"
-	"time"
 
 	"github.com/lann/builder"
 )
@@ -48,76 +45,18 @@ func (b *sqlizerBuffer) ToSql() (sql string, args []any, err error) {
 // whenPart is a helper structure to describe SQLs "WHEN ... THEN ..." expression.
 type whenPart struct {
 	when Sqlizer
-
-	then      Sqlizer
-	thenValue any
-	nullThen  bool
+	then Sqlizer
 }
 
 func newWhenPart(when, then any) whenPart {
-	wp := whenPart{
-		when:      newPart(when),
-		then:      nil,
-		thenValue: nil,
-		nullThen:  false,
-	}
-
-	switch t := then.(type) {
-	case Sqlizer:
-		wp.then = newPart(then)
-	default:
-		if t == nil {
-			wp.nullThen = true
-		} else {
-			sqlName, err := sqlTypeNameHelper(reflect.TypeOf(then))
-			if err != nil {
-				wp.thenValue = t
-			} else {
-				wp.then = newPart(Expr(fmt.Sprintf("CAST(? AS %s)", sqlName), t))
-			}
-		}
-	}
-
-	return wp
-}
-
-func sqlTypeNameHelper(t reflect.Type) (string, error) {
-	switch t.Kind() { //nolint:exhaustive // only specific kinds are supported for SQL type names
-	case reflect.Bool:
-		return "boolean", nil
-	case reflect.Int64, reflect.Uint64, reflect.Int, reflect.Uint:
-		return "bigint", nil
-	case reflect.Int32, reflect.Uint32:
-		return "integer", nil
-	case reflect.Int16, reflect.Uint16, reflect.Int8, reflect.Uint8:
-		return "smallint", nil
-	case reflect.Float32, reflect.Float64:
-		return "double precision", nil
-	case reflect.String:
-		return "text", nil
-	case reflect.Struct:
-		if t == reflect.TypeOf(time.Time{}) {
-			return "timestamp with time zone", nil
-		}
-	case reflect.Slice, reflect.Array:
-		sqlType, err := sqlTypeNameHelper(t.Elem())
-		if err != nil {
-			return "", err
-		}
-		return sqlType + "[]", nil
-	}
-
-	return "", fmt.Errorf("unsupported type %s", t.Name())
+	return whenPart{newPart(when), newPart(then)}
 }
 
 // caseData holds all the data required to build a CASE SQL construct.
 type caseData struct {
 	What      Sqlizer
 	WhenParts []whenPart
-
 	Else      Sqlizer
-	ElseValue any
-	ElseNull  bool
 }
 
 // ToSql implements Sqlizer.
@@ -140,30 +79,13 @@ func (d *caseData) ToSql() (sqlStr string, args []any, err error) {
 	for _, p := range d.WhenParts {
 		_, _ = sql.WriteString("WHEN ")
 		sql.WriteSql(p.when)
-
-		if p.then == nil && p.thenValue == nil && !p.nullThen {
-			return "", nil, errors.New("When clause must have Then part")
-		}
-
 		_, _ = sql.WriteString("THEN ")
-
-		if p.then != nil {
-			sql.WriteSql(p.then)
-		} else {
-			_, _ = sql.WriteString(Placeholders(1) + " ")
-			sql.args = append(sql.args, p.thenValue)
-		}
-	}
-
-	if d.Else != nil || d.ElseValue != nil || d.ElseNull {
-		_, _ = sql.WriteString("ELSE ")
+		sql.WriteSql(p.then)
 	}
 
 	if d.Else != nil {
+		_, _ = sql.WriteString("ELSE ")
 		sql.WriteSql(d.Else)
-	} else if d.ElseValue != nil || d.ElseNull {
-		_, _ = sql.WriteString(Placeholders(1) + " ")
-		sql.args = append(sql.args, d.ElseValue)
 	}
 
 	_, _ = sql.WriteString("END")
@@ -202,15 +124,7 @@ func (b CaseBuilder) When(when, then any) CaseBuilder {
 	return builder.Append(b, "WhenParts", newWhenPart(when, then)).(CaseBuilder)
 }
 
-// Else What sets optional "ELSE ..." part for CASE construct.
+// Else sets optional "ELSE ..." part for CASE construct.
 func (b CaseBuilder) Else(e any) CaseBuilder {
-	switch e.(type) {
-	case Sqlizer:
-		return builder.Set(b, "Else", newPart(e)).(CaseBuilder)
-	default:
-		if e == nil {
-			return builder.Set(b, "ElseNull", true).(CaseBuilder)
-		}
-		return builder.Set(b, "ElseValue", e).(CaseBuilder)
-	}
+	return builder.Set(b, "Else", newPart(e)).(CaseBuilder)
 }
