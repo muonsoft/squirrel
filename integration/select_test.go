@@ -258,21 +258,10 @@ INSERT INTO user_groups_all (user_id, group_id) VALUES
 		From("departments_all d").
 		Where(sq.Expr("d.id = au.department_id"))
 
-	orderByColumns := map[int]string{
-		1: "au.status",
-		2: "au.name",
-		3: "au.id",
-	}
-	orderByConds := []sq.OrderCond{
-		{ColumnID: 1, Direction: sq.Asc},
-		{ColumnID: 2, Direction: sq.Asc},
-		{ColumnID: 3, Direction: sq.Desc},
-	}
-
 	selectQuery := sq.Select().
 		PrefixExpr(sq.Expr("/* select-all-constructs */")).
 		Options("DISTINCT ON (au.status)").
-		Alias("au", "pref").Columns("id", "name").
+		Columns("au.id AS pref_id", "au.name AS pref_name").
 		Column(sq.Alias(displayName, "display_name")).
 		Column(sq.Alias(sq.Coalesce("n/a", sq.Expr("e.address")), "email_label")).
 		Column(sq.Alias(statusCase, "status_rank")).
@@ -293,7 +282,7 @@ INSERT INTO user_groups_all (user_id, group_id) VALUES
 		Where(sq.And{
 			sq.Range("au.age", 20, 35),
 			sq.Or{
-				sq.EqNotEmpty{"au.status": "active", "au.name": ""},
+				sq.Eq{"au.status": "active"},
 				sq.Eq{"au.status": "pending"},
 			},
 			sq.Not(sq.Expr("au.status = ?", "inactive")),
@@ -329,11 +318,7 @@ INSERT INTO user_groups_all (user_id, group_id) VALUES
 			"ot.avg_amount",
 		).
 		Having(sq.Expr("COUNT(o.id) >= ?", 1)).
-		OrderByCond(
-			orderByColumns,
-			orderByConds,
-			sq.OrderByCondOption{ColumnID: 2, NullsType: sq.OrderNullsLast},
-		).
+		OrderBy("au.status ASC", "au.name ASC NULLS LAST", "au.id DESC").
 		Limit(10).
 		Offset(0)
 

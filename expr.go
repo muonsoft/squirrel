@@ -816,55 +816,6 @@ func (e rangeExpr) ToSql() (sql string, args []any, err error) {
 	return nestedToSql(s)
 }
 
-// EqNotEmpty ignores empty and zero values in Eq map.
-// Ex: EqNotEmpty{"id1": 1, "name": nil, id2: 0, "desc": ""} -> "id1 = 1".
-type EqNotEmpty map[string]any
-
-// ToSql builds the query into a SQL string and bound args.
-func (eq EqNotEmpty) ToSql() (sql string, args []any, err error) {
-	vals := make(Eq, len(eq))
-	for k, v := range eq {
-		v = clearEmptyValue(v)
-		if v != nil {
-			vals[k] = v
-		}
-	}
-
-	return nestedToSql(vals)
-}
-
-// clearEmptyValue recursively clears empty and zero values in any type.
-func clearEmptyValue(v any) any {
-	if v == nil {
-		return nil
-	}
-
-	t := reflect.ValueOf(v)
-	switch t.Kind() { //nolint:exhaustive // only specific kinds are supported for SQL type conversion
-	case reflect.Array, reflect.Slice:
-		if t.Len() != 0 {
-			newSlice := reflect.MakeSlice(t.Type(), 0, t.Len())
-			for i := 0; i < t.Len(); i++ {
-				itemVal := clearEmptyValue(t.Index(i).Interface())
-				if itemVal != nil {
-					newSlice = reflect.Append(newSlice, t.Index(i))
-				}
-			}
-
-			if newSlice.Len() != 0 {
-				return newSlice.Interface()
-			}
-		}
-
-	default:
-		if !t.IsZero() {
-			return v
-		}
-	}
-
-	return nil
-}
-
 type cteExpr struct {
 	expr Sqlizer
 	cte  string

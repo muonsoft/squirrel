@@ -7,32 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/exp/slices"
-
 	"github.com/lann/builder"
 )
-
-// Direction is used in OrderByDir to specify the direction of the ordering.
-type Direction int
-
-const (
-	Asc Direction = iota
-	Desc
-)
-
-// String returns the string representation of the direction.
-func (d Direction) String() string {
-	if d == Asc {
-		return "ASC"
-	}
-	return "DESC"
-}
-
-// OrderCond is used in OrderByDir to specify the condition of the ordering.
-type OrderCond struct {
-	ColumnID  int
-	Direction Direction
-}
 
 type selectData struct {
 	PlaceholderFormat PlaceholderFormat
@@ -382,66 +358,6 @@ func (b SelectBuilder) OrderBy(orderBys ...string) SelectBuilder {
 	return b
 }
 
-// OrderNullsType is used to specify the order of NULLs in ORDER BY clause.
-type OrderNullsType int
-
-const (
-	OrderNullsUndefined OrderNullsType = iota
-	OrderNullsFirst                    // ORDER BY ... NULLS FIRST
-	OrderNullsLast                     // ORDER BY ... NULLS LAST
-)
-
-// String returns the string representation of the order of NULLs.
-func (o OrderNullsType) String() string {
-	if o == OrderNullsFirst {
-		return "FIRST"
-	}
-	if o == OrderNullsLast {
-		return "LAST"
-	}
-	return ""
-}
-
-// OrderByCondOption is used to specify additional options for OrderByCond.
-type OrderByCondOption struct {
-	ColumnID  int
-	NullsType OrderNullsType
-}
-
-// OrderByCond adds ORDER BY expressions with direction to the query.
-// The columns map is used to map OrderCond.ColumnID to the column name.
-// Can be used to avoid hardcoding column names in the code.
-func (b SelectBuilder) OrderByCond(columns map[int]string, conds []OrderCond, opts ...OrderByCondOption) SelectBuilder {
-	for i, cond := range conds {
-		if pos := slices.IndexFunc(conds[:i], func(c OrderCond) bool {
-			return c.ColumnID == cond.ColumnID
-		}); pos >= 0 && pos < i {
-			continue
-		}
-
-		column, ok := columns[cond.ColumnID]
-		if !ok {
-			panic(fmt.Sprintf("column id %d not found in columns map %v", cond.ColumnID, columns))
-		}
-
-		nullsType := OrderNullsUndefined
-		for _, opt := range opts {
-			if opt.ColumnID == cond.ColumnID {
-				nullsType = opt.NullsType
-				break
-			}
-		}
-
-		if nullsType == OrderNullsUndefined {
-			b = b.OrderByClause(fmt.Sprintf("%s %s", column, cond.Direction.String()))
-		} else {
-			b = b.OrderByClause(fmt.Sprintf("%s %s NULLS %s", column, cond.Direction.String(), nullsType.String()))
-		}
-	}
-
-	return b
-}
-
 // Limit sets a LIMIT clause on the query.
 func (b SelectBuilder) Limit(limit uint64) SelectBuilder {
 	return builder.Set(b, "Limit", strconv.FormatUint(limit, 10)).(SelectBuilder)
@@ -470,75 +386,6 @@ func (b SelectBuilder) Suffix(sql string, args ...any) SelectBuilder {
 // SuffixExpr adds an expression to the end of the query.
 func (b SelectBuilder) SuffixExpr(e Sqlizer) SelectBuilder {
 	return builder.Append(b, "Suffixes", e).(SelectBuilder)
-}
-
-type alias struct {
-	builder SelectBuilder
-	table   string
-	prefix  []string
-}
-
-// Columns sets the columns for the table alias.
-func (a alias) Columns(columns ...string) SelectBuilder {
-	if len(columns) == 0 {
-		return a.builder
-	}
-
-	return a.builder.Columns(prepareAliasColumns(a.table, a.prefix, columns...)...)
-}
-
-// GroupBy sets the group by for the table alias.
-func (a alias) GroupBy(groupBys ...string) SelectBuilder {
-	if len(groupBys) == 0 {
-		return a.builder
-	}
-
-	return a.builder.GroupBy(prepareAliasColumns(a.table, a.prefix, groupBys...)...)
-}
-
-// OrderBy sets the order by for the table alias.
-func (a alias) OrderBy(orderBys ...string) SelectBuilder {
-	if len(orderBys) == 0 {
-		return a.builder
-	}
-
-	return a.builder.OrderBy(prepareAliasColumns(a.table, a.prefix, orderBys...)...)
-}
-
-func formatAliasColumn(table, column string, prefix []string, hasPrefix bool) string {
-	if !hasPrefix {
-		if table == "" {
-			return column
-		}
-		return fmt.Sprintf("%s.%s", table, column)
-	}
-
-	if table == "" {
-		return fmt.Sprintf("%s AS %s_%s", column, prefix[0], column)
-	}
-	return fmt.Sprintf("%s.%s AS %s_%s", table, column, prefix[0], column)
-}
-
-func prepareAliasColumns(table string, prefix []string, columns ...string) []string {
-	columnsPrepared := make([]string, 0, len(columns))
-	hasPrefix := len(prefix) > 0
-
-	for _, column := range columns {
-		columnsPrepared = append(columnsPrepared, formatAliasColumn(table, column, prefix, hasPrefix))
-	}
-
-	return columnsPrepared
-}
-
-// Alias creates a new table alias for the select builder.
-// Prefix is used to add a prefix to the beginning of the column names. If no prefix, the column name will be used.
-// All prefixes except the first will be ignored.
-func (b SelectBuilder) Alias(table string, prefix ...string) alias {
-	return alias{
-		builder: b,
-		table:   table,
-		prefix:  prefix,
-	}
 }
 
 // With adds a CTE (Common Table Expression) to the query.

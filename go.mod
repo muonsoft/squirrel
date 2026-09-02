@@ -5,7 +5,6 @@ go 1.26
 require (
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/exp v0.0.0-20260611194520-c48552f49976
 )
 
 require (

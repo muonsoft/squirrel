@@ -735,21 +735,6 @@ func Test_Range(t *testing.T) {
 	assert.Empty(t, args)
 }
 
-func Test_EqNotEmpty(t *testing.T) {
-	t.Parallel()
-	sql, args, err := EqNotEmpty{
-		"col1": 1,
-		"col2": 0,
-		"col3": "",
-		"col4": nil,
-		"col5": []int{2, 0, 3},
-		"col6": []any{0, 0},
-	}.ToSql()
-	require.NoError(t, err)
-	assert.Equal(t, "col1 = ? AND col5 IN (?,?)", sql)
-	assert.Equal(t, []any{1, 2, 3}, args)
-}
-
 func ExampleEq() {
 	sql, _, _ := Select("id", "created", "first_name").From("users").Where(Eq{
 		"company": 20,
