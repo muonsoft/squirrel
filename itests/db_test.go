@@ -8,7 +8,7 @@ import (
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5/pgxpool"
-	sq "github.com/n-r-w/squirrel"
+	sq "github.com/muonsoft/squirrel"
 	"github.com/n-r-w/testdock/v2"
 	"github.com/stretchr/testify/require"
 )

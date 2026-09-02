@@ -1,6 +1,6 @@
-module github.com/n-r-w/squirrel
+module github.com/muonsoft/squirrel
 
-go 1.26.0
+go 1.26
 
 require (
 	github.com/georgysavva/scany/v2 v2.1.4

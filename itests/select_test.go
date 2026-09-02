@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
-	sq "github.com/n-r-w/squirrel"
+	sq "github.com/muonsoft/squirrel"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
