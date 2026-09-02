@@ -2,9 +2,6 @@ package squirrel
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestInsertBuilderToSql(t *testing.T) {
@@ -19,24 +16,24 @@ func TestInsertBuilderToSql(t *testing.T) {
 		Suffix("RETURNING ?", 5)
 
 	sql, args, err := b.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSQL := "WITH prefix AS ? " +
 		"INSERT DELAYED IGNORE INTO a (b,c) VALUES (?,?),(?,? + 1) " +
 		"RETURNING ?"
-	assert.Equal(t, expectedSQL, sql)
+	assertEqual(t, expectedSQL, sql)
 
 	expectedArgs := []any{0, 1, 2, 3, 4, 5}
-	assert.Equal(t, expectedArgs, args)
+	assertEqual(t, expectedArgs, args)
 }
 
 func TestInsertBuilderToSqlErr(t *testing.T) {
 	t.Parallel()
 	_, _, err := Insert("").Values(1).ToSql()
-	require.Error(t, err)
+	mustError(t, err)
 
 	_, _, err = Insert("x").ToSql()
-	require.Error(t, err)
+	mustError(t, err)
 }
 
 func TestInsertBuilderMustSql(t *testing.T) {
@@ -54,10 +51,10 @@ func TestInsertBuilderPlaceholders(t *testing.T) {
 	b := Insert("test").Values(1, 2)
 
 	sql, _, _ := b.PlaceholderFormat(Question).ToSql()
-	assert.Equal(t, "INSERT INTO test VALUES (?,?)", sql)
+	assertEqual(t, "INSERT INTO test VALUES (?,?)", sql)
 
 	sql, _, _ = b.PlaceholderFormat(Dollar).ToSql()
-	assert.Equal(t, "INSERT INTO test VALUES ($1,$2)", sql)
+	assertEqual(t, "INSERT INTO test VALUES ($1,$2)", sql)
 }
 
 func TestInsertBuilderSetMap(t *testing.T) {
@@ -65,13 +62,13 @@ func TestInsertBuilderSetMap(t *testing.T) {
 	b := Insert("table").SetMap(Eq{"field1": 1, "field2": 2, "field3": 3})
 
 	sql, args, err := b.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSQL := "INSERT INTO table (field1,field2,field3) VALUES (?,?,?)"
-	assert.Equal(t, expectedSQL, sql)
+	assertEqual(t, expectedSQL, sql)
 
 	expectedArgs := []any{1, 2, 3}
-	assert.Equal(t, expectedArgs, args)
+	assertEqual(t, expectedArgs, args)
 }
 
 func TestInsertBuilderSelect(t *testing.T) {
@@ -80,13 +77,13 @@ func TestInsertBuilderSelect(t *testing.T) {
 	ib := Insert("table2").Columns("field1").Select(sb)
 
 	sql, args, err := ib.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSQL := "INSERT INTO table2 (field1) SELECT field1 FROM table1 WHERE field1 = ?"
-	assert.Equal(t, expectedSQL, sql)
+	assertEqual(t, expectedSQL, sql)
 
 	expectedArgs := []any{1}
-	assert.Equal(t, expectedArgs, args)
+	assertEqual(t, expectedArgs, args)
 }
 
 func TestInsertBuilderReplace(t *testing.T) {
@@ -96,9 +93,9 @@ func TestInsertBuilderReplace(t *testing.T) {
 	expectedSQL := "REPLACE INTO table VALUES (?)"
 
 	sql, _, err := b.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
-	assert.Equal(t, expectedSQL, sql)
+	assertEqual(t, expectedSQL, sql)
 }
 
 func TestInsertSelect_DollarPlaceholderNumberingConflict(t *testing.T) {
@@ -113,11 +110,11 @@ func TestInsertSelect_DollarPlaceholderNumberingConflict(t *testing.T) {
 		Suffix("RETURNING id = ?", 2)
 
 	sql, args, err := q.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSQL := "INSERT INTO dst (a) SELECT a FROM src WHERE x = $1 RETURNING id = $2"
-	assert.Equal(t, expectedSQL, sql)
-	assert.Equal(t, []any{1, 2}, args)
+	assertEqual(t, expectedSQL, sql)
+	assertEqual(t, []any{1, 2}, args)
 }
 
 func TestInsertValuesNestedSelect_DollarPlaceholderNumberingConflict(t *testing.T) {
@@ -132,9 +129,9 @@ func TestInsertValuesNestedSelect_DollarPlaceholderNumberingConflict(t *testing.
 		Suffix("RETURNING z = ?", 8)
 
 	sql, args, err := q.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSQL := "INSERT INTO t1 (x) VALUES (SELECT y FROM t2 WHERE y = $1) RETURNING z = $2"
-	assert.Equal(t, expectedSQL, sql)
-	assert.Equal(t, []any{7, 8}, args)
+	assertEqual(t, expectedSQL, sql)
+	assertEqual(t, []any{7, 8}, args)
 }

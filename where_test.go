@@ -3,8 +3,6 @@ package squirrel
 import (
 	"bytes"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestWherePartsAppendToSql(t *testing.T) {
@@ -16,34 +14,34 @@ func TestWherePartsAppendToSql(t *testing.T) {
 	}
 	sql := &bytes.Buffer{}
 	args, _ := appendToSql(parts, sql, " AND ", []any{})
-	assert.Equal(t, "x = ? AND y = ?", sql.String())
-	assert.Equal(t, []any{1, 2}, args)
+	assertEqual(t, "x = ? AND y = ?", sql.String())
+	assertEqual(t, []any{1, 2}, args)
 }
 
 func TestWherePartsAppendToSqlErr(t *testing.T) {
 	t.Parallel()
 	parts := []Sqlizer{newWherePart(1)}
 	_, err := appendToSql(parts, &bytes.Buffer{}, "", []any{})
-	assert.Error(t, err)
+	assertError(t, err)
 }
 
 func TestWherePartNil(t *testing.T) {
 	t.Parallel()
 	sql, _, _ := newWherePart(nil).ToSql()
-	assert.Empty(t, sql)
+	assertEmpty(t, sql)
 }
 
 func TestWherePartErr(t *testing.T) {
 	t.Parallel()
 	_, _, err := newWherePart(1).ToSql()
-	assert.Error(t, err)
+	assertError(t, err)
 }
 
 func TestWherePartString(t *testing.T) {
 	t.Parallel()
 	sql, args, _ := newWherePart("x = ?", 1).ToSql()
-	assert.Equal(t, "x = ?", sql)
-	assert.Equal(t, []any{1}, args)
+	assertEqual(t, "x = ?", sql)
+	assertEqual(t, []any{1}, args)
 }
 
 func TestWherePartMap(t *testing.T) {

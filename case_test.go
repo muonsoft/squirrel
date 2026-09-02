@@ -4,9 +4,6 @@ import (
 	"reflect"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCaseWithVal(t *testing.T) {
@@ -21,7 +18,7 @@ func TestCaseWithVal(t *testing.T) {
 		From("table")
 	sql, args, err := qb.ToSql()
 
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "SELECT CASE number " +
 		"WHEN 1 THEN CAST(? AS text) " +
@@ -29,10 +26,10 @@ func TestCaseWithVal(t *testing.T) {
 		"ELSE ? " +
 		"END " +
 		"FROM table"
-	assert.Equal(t, expectedSql, sql)
+	assertEqual(t, expectedSql, sql)
 
 	expectedArgs := []any{"one", "two", "big number"}
-	assert.Equal(t, expectedArgs, args)
+	assertEqual(t, expectedArgs, args)
 }
 
 func TestCaseWithComplexVal(t *testing.T) {
@@ -45,16 +42,16 @@ func TestCaseWithComplexVal(t *testing.T) {
 		From("table")
 	sql, args, err := qb.ToSql()
 
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "SELECT (CASE ? > ? " +
 		"WHEN true THEN CAST(? AS text) " +
 		"END) AS complexCase " +
 		"FROM table"
-	assert.Equal(t, expectedSql, sql)
+	assertEqual(t, expectedSql, sql)
 
 	expectedArgs := []any{10, 5, "T"}
-	assert.Equal(t, expectedArgs, args)
+	assertEqual(t, expectedArgs, args)
 }
 
 func TestCaseWithNoVal(t *testing.T) {
@@ -66,7 +63,7 @@ func TestCaseWithNoVal(t *testing.T) {
 	qb := Select().Column(caseStmt).From("table")
 	sql, args, err := qb.ToSql()
 
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "SELECT CASE " +
 		"WHEN x = ? THEN x is zero " +
@@ -74,10 +71,10 @@ func TestCaseWithNoVal(t *testing.T) {
 		"END " +
 		"FROM table"
 
-	assert.Equal(t, expectedSql, sql)
+	assertEqual(t, expectedSql, sql)
 
 	expectedArgs := []any{0, 1, 2}
-	assert.Equal(t, expectedArgs, args)
+	assertEqual(t, expectedArgs, args)
 }
 
 func TestCaseWithExpr(t *testing.T) {
@@ -93,7 +90,7 @@ func TestCaseWithExpr(t *testing.T) {
 	qb := Select().Column(caseStmt).From("table")
 	sql, args, err := qb.ToSql()
 
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "SELECT CASE x = ? " +
 		"WHEN 1 > 0 THEN ?::text " +
@@ -105,7 +102,7 @@ func TestCaseWithExpr(t *testing.T) {
 		"END " +
 		"FROM table"
 
-	assert.Equal(t, expectedSql, sql)
+	assertEqual(t, expectedSql, sql)
 
 	expectedArgs := []any{
 		true,
@@ -116,7 +113,7 @@ func TestCaseWithExpr(t *testing.T) {
 		true,
 		42,
 	}
-	assert.Equal(t, expectedArgs, args)
+	assertEqual(t, expectedArgs, args)
 }
 
 func TestMultipleCase(t *testing.T) {
@@ -135,20 +132,20 @@ func TestMultipleCase(t *testing.T) {
 
 	sql, args, err := qb.ToSql()
 
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "SELECT " +
 		"(CASE x = ? WHEN true THEN ? ELSE ? END) AS case_noval, " +
 		"(CASE WHEN x = ? THEN CAST(? AS text) WHEN x > ? THEN CONCAT('x is greater than ', ?) END) AS case_expr " +
 		"FROM table"
 
-	assert.Equal(t, expectedSql, sql)
+	assertEqual(t, expectedSql, sql)
 
 	expectedArgs := []any{
 		true, "it's true!",
 		42, 0, "x is zero", 1, 2,
 	}
-	assert.Equal(t, expectedArgs, args)
+	assertEqual(t, expectedArgs, args)
 }
 
 func TestCaseWithNoWhenClause(t *testing.T) {
@@ -160,9 +157,9 @@ func TestCaseWithNoWhenClause(t *testing.T) {
 
 	_, _, err := qb.ToSql()
 
-	require.Error(t, err)
+	mustError(t, err)
 
-	assert.Equal(t, "case expression must contain at lease one WHEN clause", err.Error())
+	assertEqual(t, "case expression must contain at lease one WHEN clause", err.Error())
 }
 
 func TestCaseBuilderMustSql(t *testing.T) {
@@ -186,15 +183,15 @@ func TestCaseNull(t *testing.T) {
 		From("table")
 
 	sql, args, err := qb.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "SELECT CASE " +
 		"WHEN 1 THEN ? " +
 		"ELSE ? " +
 		"END " +
 		"FROM table"
-	assert.Equal(t, expectedSql, sql)
-	assert.Equal(t, []any{nil, nil}, args)
+	assertEqual(t, expectedSql, sql)
+	assertEqual(t, []any{nil, nil}, args)
 }
 
 func TestSqlTypeNameHelper(t *testing.T) {

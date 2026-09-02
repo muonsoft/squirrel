@@ -2,9 +2,6 @@ package squirrel
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestWithAsQuery_OneSubquery(t *testing.T) {
@@ -17,10 +14,10 @@ func TestWithAsQuery_OneSubquery(t *testing.T) {
 			From("lab"),
 	)
 	q, _, err := w.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "WITH lab AS (SELECT col FROM tab WHERE simple AND NOT hard) SELECT col FROM lab"
-	assert.Equal(t, expectedSql, q)
+	assertEqual(t, expectedSql, q)
 
 	w = WithRecursive("lab").As(
 		Select("col").From("tab").
@@ -28,13 +25,13 @@ func TestWithAsQuery_OneSubquery(t *testing.T) {
 			Where("NOT hard"),
 	).Select(Select("col").From("lab"))
 	q, _, err = w.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql = "WITH RECURSIVE lab AS (" +
 		"SELECT col FROM tab WHERE simple AND NOT hard" +
 		") " +
 		"SELECT col FROM lab"
-	assert.Equal(t, expectedSql, q)
+	assertEqual(t, expectedSql, q)
 }
 
 func TestWithAsQuery_TwoSubqueries(t *testing.T) {
@@ -49,7 +46,7 @@ func TestWithAsQuery_TwoSubqueries(t *testing.T) {
 		From("lab_1").Join("lab_2 ON lab_1.col_common = lab_2.col_common"),
 	)
 	q, _, err := w.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "WITH lab_1 AS (" +
 		"SELECT col_1, col_common FROM tab_1 WHERE simple AND NOT hard" +
@@ -57,7 +54,7 @@ func TestWithAsQuery_TwoSubqueries(t *testing.T) {
 		"SELECT col_2, col_common FROM tab_2" +
 		") " +
 		"SELECT col_1, col_2, col_common FROM lab_1 JOIN lab_2 ON lab_1.col_common = lab_2.col_common"
-	assert.Equal(t, expectedSql, q)
+	assertEqual(t, expectedSql, q)
 }
 
 func TestWithAsQuery_ManySubqueries(t *testing.T) {
@@ -78,7 +75,7 @@ func TestWithAsQuery_ManySubqueries(t *testing.T) {
 			Join("lab_3 ON lab_1.col_common = lab_3.col_common").
 			Join("lab_4 ON lab_1.col_common = lab_4.col_common"))
 	q, _, err := w.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "WITH lab_1 AS (" +
 		"SELECT col_1, col_common FROM tab_1 WHERE simple AND NOT hard" +
@@ -90,7 +87,7 @@ func TestWithAsQuery_ManySubqueries(t *testing.T) {
 		"SELECT col_4, col_common FROM tab_4" +
 		") " +
 		"SELECT col_1, col_2, col_3, col_4, col_common FROM lab_1 JOIN lab_2 ON lab_1.col_common = lab_2.col_common JOIN lab_3 ON lab_1.col_common = lab_3.col_common JOIN lab_4 ON lab_1.col_common = lab_4.col_common"
-	assert.Equal(t, expectedSql, q)
+	assertEqual(t, expectedSql, q)
 }
 
 func TestWithAsQuery_Insert(t *testing.T) {
@@ -101,13 +98,13 @@ func TestWithAsQuery_Insert(t *testing.T) {
 			Where("NOT hard"),
 	).Insert(Insert("ins_tab").Columns("ins_col").Select(Select("col").From("lab")))
 	q, _, err := w.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "WITH lab AS (" +
 		"SELECT col FROM tab WHERE simple AND NOT hard" +
 		") " +
 		"INSERT INTO ins_tab (ins_col) SELECT col FROM lab"
-	assert.Equal(t, expectedSql, q)
+	assertEqual(t, expectedSql, q)
 }
 
 func TestWithAsQuery_Update(t *testing.T) {
@@ -122,14 +119,14 @@ func TestWithAsQuery_Update(t *testing.T) {
 			Where("common_col = lab.common_col"))
 
 	q, _, err := w.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "WITH lab AS (" +
 		"SELECT col, common_col FROM tab WHERE simple AND NOT hard" +
 		") " +
 		"UPDATE upd_tab, lab SET upd_col = lab.col WHERE common_col = lab.common_col"
 
-	assert.Equal(t, expectedSql, q)
+	assertEqual(t, expectedSql, q)
 }
 
 func TestCTEPlaceholderFormat(t *testing.T) {
@@ -143,16 +140,16 @@ func TestCTEPlaceholderFormat(t *testing.T) {
 				Set("col3", 2))
 
 	sql, _, err := q.PlaceholderFormat(Question).ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "WITH table1 AS (SELECT col1, col2 FROM table1 WHERE col1 = ?) UPDATE table2 SET col3 = ?"
-	assert.Equal(t, expectedSql, sql)
+	assertEqual(t, expectedSql, sql)
 
 	sql, _, err = q.PlaceholderFormat(Dollar).ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql = "WITH table1 AS (SELECT col1, col2 FROM table1 WHERE col1 = $1) UPDATE table2 SET col3 = $2"
-	assert.Equal(t, expectedSql, sql)
+	assertEqual(t, expectedSql, sql)
 }
 
 func TestCTEWithNestedSelects_DollarPlaceholderFormat(t *testing.T) {
@@ -182,15 +179,15 @@ func TestCTEWithNestedSelects_DollarPlaceholderFormat(t *testing.T) {
 		)
 
 	sql, args, err := q.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSQL := "" +
 		"WITH table1 AS (SELECT col1, col2 FROM table1 WHERE col1 = $1 AND col2 = $2), " +
 		"table2 AS (SELECT col3, col4 FROM table2 WHERE col3 = $3 AND col4 = $4) " +
 		"SELECT col1, col2, col3, col4 FROM table1 JOIN table2 ON col3 = col4 WHERE col1 = $5"
 
-	assert.Equal(t, expectedSQL, sql)
-	assert.Equal(t, []any{1, "123", "345", 2, 3}, args)
+	assertEqual(t, expectedSQL, sql)
+	assertEqual(t, []any{1, "123", "345", 2, 3}, args)
 }
 
 func TestCTEFinalUpdate_DollarPlaceholderNumberingConflict(t *testing.T) {
@@ -206,11 +203,11 @@ func TestCTEFinalUpdate_DollarPlaceholderNumberingConflict(t *testing.T) {
 		)
 
 	sql, args, err := q.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSQL := "WITH w1 AS (SELECT c FROM t1 WHERE a = $1) UPDATE t2 SET x = $2 WHERE y = $3"
-	assert.Equal(t, expectedSQL, sql)
-	assert.Equal(t, []any{1, 2, 3}, args)
+	assertEqual(t, expectedSQL, sql)
+	assertEqual(t, []any{1, 2, 3}, args)
 }
 
 func TestCTEIntermediateUpdateReturning_DollarPlaceholderFormat(t *testing.T) {
@@ -243,15 +240,15 @@ func TestCTEIntermediateUpdateReturning_DollarPlaceholderFormat(t *testing.T) {
 		)
 
 	sql, args, err := q.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSQL := "" +
 		"WITH candidate AS (SELECT id FROM delivery_messages WHERE state = $1 ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED), " +
 		"picked AS (SELECT id FROM candidate), " +
 		"updated AS (UPDATE delivery_messages dm SET state = $2 FROM picked p WHERE dm.id = p.id RETURNING dm.id, dm.state) " +
 		"SELECT id, state FROM updated ORDER BY id"
-	assert.Equal(t, expectedSQL, sql)
-	assert.Equal(t, []any{"ready", "claimed"}, args)
+	assertEqual(t, expectedSQL, sql)
+	assertEqual(t, []any{"ready", "claimed"}, args)
 }
 
 func TestWithAsQuery_Replace(t *testing.T) {
@@ -262,13 +259,13 @@ func TestWithAsQuery_Replace(t *testing.T) {
 			Where("NOT hard"),
 	).Replace(Replace("ins_tab").Columns("ins_col").Select(Select("col").From("lab")))
 	q, _, err := w.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "WITH lab AS (" +
 		"SELECT col FROM tab WHERE simple AND NOT hard" +
 		") " +
 		"REPLACE INTO ins_tab (ins_col) SELECT col FROM lab"
-	assert.Equal(t, expectedSql, q)
+	assertEqual(t, expectedSql, q)
 }
 
 func TestWithAsQuery_Delete(t *testing.T) {
@@ -283,12 +280,12 @@ func TestWithAsQuery_Delete(t *testing.T) {
 	)
 
 	q, _, err := w.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "WITH lab AS (" +
 		"SELECT id FROM tab WHERE simple AND NOT hard" +
 		") " +
 		"DELETE FROM del_tab WHERE id IN (SELECT id FROM lab)"
 
-	assert.Equal(t, expectedSql, q)
+	assertEqual(t, expectedSql, q)
 }

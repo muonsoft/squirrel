@@ -2,9 +2,6 @@ package squirrel
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateBuilderToSql(t *testing.T) {
@@ -24,7 +21,7 @@ func TestUpdateBuilderToSql(t *testing.T) {
 		Suffix("RETURNING ?", 6)
 
 	sql, args, err := b.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "WITH prefix AS ? " +
 		"UPDATE a SET b = ? + 1, c = ?, " +
@@ -34,19 +31,19 @@ func TestUpdateBuilderToSql(t *testing.T) {
 		"WHERE d = ? " +
 		"ORDER BY e LIMIT 4 OFFSET 5 " +
 		"RETURNING ?"
-	assert.Equal(t, expectedSql, sql)
+	assertEqual(t, expectedSql, sql)
 
 	expectedArgs := []any{0, 1, 2, 2, 1, "foo", "bar", 3, 6}
-	assert.Equal(t, expectedArgs, args)
+	assertEqual(t, expectedArgs, args)
 }
 
 func TestUpdateBuilderToSqlErr(t *testing.T) {
 	t.Parallel()
 	_, _, err := Update("").Set("x", 1).ToSql()
-	require.Error(t, err)
+	mustError(t, err)
 
 	_, _, err = Update("x").ToSql()
-	require.Error(t, err)
+	mustError(t, err)
 }
 
 func TestUpdateBuilderMustSql(t *testing.T) {
@@ -64,17 +61,17 @@ func TestUpdateBuilderPlaceholders(t *testing.T) {
 	b := Update("test").SetMap(Eq{"x": 1, "y": 2})
 
 	sql, _, _ := b.PlaceholderFormat(Question).ToSql()
-	assert.Equal(t, "UPDATE test SET x = ?, y = ?", sql)
+	assertEqual(t, "UPDATE test SET x = ?, y = ?", sql)
 
 	sql, _, _ = b.PlaceholderFormat(Dollar).ToSql()
-	assert.Equal(t, "UPDATE test SET x = $1, y = $2", sql)
+	assertEqual(t, "UPDATE test SET x = $1, y = $2", sql)
 }
 
 func TestUpdateBuilderFrom(t *testing.T) {
 	t.Parallel()
 	sql, _, err := Update("employees").Set("sales_count", 100).From("accounts").Where("accounts.name = ?", "ACME").ToSql()
-	require.NoError(t, err)
-	assert.Equal(t, "UPDATE employees SET sales_count = ? FROM accounts WHERE accounts.name = ?", sql)
+	mustNoError(t, err)
+	assertEqual(t, "UPDATE employees SET sales_count = ? FROM accounts WHERE accounts.name = ?", sql)
 }
 
 func TestUpdateBuilderFromSelect(t *testing.T) {
@@ -85,13 +82,13 @@ func TestUpdateBuilderFromSelect(t *testing.T) {
 			From("accounts").
 			Where("accounts.name = ?", "ACME"), "subquery").
 		Where("employees.account_id = subquery.id").ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSql := "UPDATE employees " +
 		"SET sales_count = ? " +
 		"FROM (SELECT id FROM accounts WHERE accounts.name = ?) AS subquery " +
 		"WHERE employees.account_id = subquery.id"
-	assert.Equal(t, expectedSql, sql)
+	assertEqual(t, expectedSql, sql)
 }
 
 func TestUpdateSetWithNestedSelect_DollarPlaceholderNumberingConflict(t *testing.T) {
@@ -105,9 +102,9 @@ func TestUpdateSetWithNestedSelect_DollarPlaceholderNumberingConflict(t *testing
 		Where("id = ?", 12)
 
 	sql, args, err := q.ToSql()
-	require.NoError(t, err)
+	mustNoError(t, err)
 
 	expectedSQL := "UPDATE t1 SET col = (SELECT max(val) FROM t2 WHERE id = $1) WHERE id = $2"
-	assert.Equal(t, expectedSQL, sql)
-	assert.Equal(t, []any{11, 12}, args)
+	assertEqual(t, expectedSQL, sql)
+	assertEqual(t, []any{11, 12}, args)
 }
