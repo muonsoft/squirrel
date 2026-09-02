@@ -1,0 +1,273 @@
+func Alias func(expr Sqlizer, alias string) aliasExpr
+func Case func(what ...interface{}) CaseBuilder
+func ConcatExpr func(parts ...interface{}) concatExpr
+func DebugSqlizer func(s Sqlizer) string
+func Delete func(from string) DeleteBuilder
+func ExecContextWith func(ctx context.Context, db ExecerContext, s Sqlizer) (res sql.Result, err error)
+func ExecWith func(db Execer, s Sqlizer) (res sql.Result, err error)
+func Expr func(sql string, args ...interface{}) Sqlizer
+func Insert func(into string) InsertBuilder
+func NewStmtCache func(prep Preparer) *StmtCache
+func NewStmtCache func(prep PreparerContext) *StmtCache
+func NewStmtCacheProxy func(db *sql.DB) DBProxyBeginner
+func NewStmtCacher func(prep Preparer) DBProxy
+func NewStmtCacher func(prep PreparerContext) DBProxyContext
+func Placeholders func(count int) string
+func QueryContextWith func(ctx context.Context, db QueryerContext, s Sqlizer) (rows *sql.Rows, err error)
+func QueryRowContextWith func(ctx context.Context, db QueryRowerContext, s Sqlizer) RowScanner
+func QueryRowWith func(db QueryRower, s Sqlizer) RowScanner
+func QueryWith func(db Queryer, s Sqlizer) (rows *sql.Rows, err error)
+func Replace func(into string) InsertBuilder
+func Select func(columns ...string) SelectBuilder
+func Update func(table string) UpdateBuilder
+func WrapStdSql func(stdSql StdSql) Runner
+func WrapStdSqlCtx func(stdSqlCtx StdSqlCtx) RunnerContext
+method (*Row) Scan func(dest ...interface{}) error
+method (*StmtCache) Clear func() (err error)
+method (*StmtCache) Exec func(query string, args ...interface{}) (res sql.Result, err error)
+method (*StmtCache) ExecContext func(ctx context.Context, query string, args ...interface{}) (res sql.Result, err error)
+method (*StmtCache) Prepare func(query string) (*sql.Stmt, error)
+method (*StmtCache) PrepareContext func(ctx context.Context, query string) (*sql.Stmt, error)
+method (*StmtCache) Query func(query string, args ...interface{}) (rows *sql.Rows, err error)
+method (*StmtCache) QueryContext func(ctx context.Context, query string, args ...interface{}) (rows *sql.Rows, err error)
+method (*StmtCache) QueryRow func(query string, args ...interface{}) RowScanner
+method (*StmtCache) QueryRowContext func(ctx context.Context, query string, args ...interface{}) RowScanner
+method (And) ToSql func() (string, []interface{}, error)
+method (CaseBuilder) Else func(expr interface{}) CaseBuilder
+method (CaseBuilder) MustSql func() (string, []interface{})
+method (CaseBuilder) ToSql func() (string, []interface{}, error)
+method (CaseBuilder) When func(when interface{}, then interface{}) CaseBuilder
+method (DeleteBuilder) Exec func() (sql.Result, error)
+method (DeleteBuilder) ExecContext func(ctx context.Context) (sql.Result, error)
+method (DeleteBuilder) From func(from string) DeleteBuilder
+method (DeleteBuilder) Limit func(limit uint64) DeleteBuilder
+method (DeleteBuilder) MustSql func() (string, []interface{})
+method (DeleteBuilder) Offset func(offset uint64) DeleteBuilder
+method (DeleteBuilder) OrderBy func(orderBys ...string) DeleteBuilder
+method (DeleteBuilder) PlaceholderFormat func(f PlaceholderFormat) DeleteBuilder
+method (DeleteBuilder) Prefix func(sql string, args ...interface{}) DeleteBuilder
+method (DeleteBuilder) PrefixExpr func(expr Sqlizer) DeleteBuilder
+method (DeleteBuilder) Query func() (*sql.Rows, error)
+method (DeleteBuilder) QueryContext func(ctx context.Context) (*sql.Rows, error)
+method (DeleteBuilder) QueryRowContext func(ctx context.Context) RowScanner
+method (DeleteBuilder) RunWith func(runner BaseRunner) DeleteBuilder
+method (DeleteBuilder) ScanContext func(ctx context.Context, dest ...interface{}) error
+method (DeleteBuilder) Suffix func(sql string, args ...interface{}) DeleteBuilder
+method (DeleteBuilder) SuffixExpr func(expr Sqlizer) DeleteBuilder
+method (DeleteBuilder) ToSql func() (string, []interface{}, error)
+method (DeleteBuilder) Where func(pred interface{}, args ...interface{}) DeleteBuilder
+method (Eq) ToSql func() (sql string, args []interface{}, err error)
+method (Gt) ToSql func() (sql string, args []interface{}, err error)
+method (GtOrEq) ToSql func() (sql string, args []interface{}, err error)
+method (ILike) ToSql func() (sql string, args []interface{}, err error)
+method (InsertBuilder) Columns func(columns ...string) InsertBuilder
+method (InsertBuilder) Exec func() (sql.Result, error)
+method (InsertBuilder) ExecContext func(ctx context.Context) (sql.Result, error)
+method (InsertBuilder) Into func(from string) InsertBuilder
+method (InsertBuilder) MustSql func() (string, []interface{})
+method (InsertBuilder) Options func(options ...string) InsertBuilder
+method (InsertBuilder) PlaceholderFormat func(f PlaceholderFormat) InsertBuilder
+method (InsertBuilder) Prefix func(sql string, args ...interface{}) InsertBuilder
+method (InsertBuilder) PrefixExpr func(expr Sqlizer) InsertBuilder
+method (InsertBuilder) Query func() (*sql.Rows, error)
+method (InsertBuilder) QueryContext func(ctx context.Context) (*sql.Rows, error)
+method (InsertBuilder) QueryRow func() RowScanner
+method (InsertBuilder) QueryRowContext func(ctx context.Context) RowScanner
+method (InsertBuilder) RunWith func(runner BaseRunner) InsertBuilder
+method (InsertBuilder) Scan func(dest ...interface{}) error
+method (InsertBuilder) ScanContext func(ctx context.Context, dest ...interface{}) error
+method (InsertBuilder) Select func(sb SelectBuilder) InsertBuilder
+method (InsertBuilder) SetMap func(clauses map[string]interface{}) InsertBuilder
+method (InsertBuilder) Suffix func(sql string, args ...interface{}) InsertBuilder
+method (InsertBuilder) SuffixExpr func(expr Sqlizer) InsertBuilder
+method (InsertBuilder) ToSql func() (string, []interface{}, error)
+method (InsertBuilder) Values func(values ...interface{}) InsertBuilder
+method (Like) ToSql func() (sql string, args []interface{}, err error)
+method (Lt) ToSql func() (sql string, args []interface{}, err error)
+method (LtOrEq) ToSql func() (sql string, args []interface{}, err error)
+method (NotEq) ToSql func() (sql string, args []interface{}, err error)
+method (NotILike) ToSql func() (sql string, args []interface{}, err error)
+method (NotLike) ToSql func() (sql string, args []interface{}, err error)
+method (Or) ToSql func() (string, []interface{}, error)
+method (SelectBuilder) Column func(column interface{}, args ...interface{}) SelectBuilder
+method (SelectBuilder) Columns func(columns ...string) SelectBuilder
+method (SelectBuilder) CrossJoin func(join string, rest ...interface{}) SelectBuilder
+method (SelectBuilder) Distinct func() SelectBuilder
+method (SelectBuilder) Exec func() (sql.Result, error)
+method (SelectBuilder) ExecContext func(ctx context.Context) (sql.Result, error)
+method (SelectBuilder) From func(from string) SelectBuilder
+method (SelectBuilder) FromSelect func(from SelectBuilder, alias string) SelectBuilder
+method (SelectBuilder) GroupBy func(groupBys ...string) SelectBuilder
+method (SelectBuilder) Having func(pred interface{}, rest ...interface{}) SelectBuilder
+method (SelectBuilder) InnerJoin func(join string, rest ...interface{}) SelectBuilder
+method (SelectBuilder) Join func(join string, rest ...interface{}) SelectBuilder
+method (SelectBuilder) JoinClause func(pred interface{}, args ...interface{}) SelectBuilder
+method (SelectBuilder) LeftJoin func(join string, rest ...interface{}) SelectBuilder
+method (SelectBuilder) Limit func(limit uint64) SelectBuilder
+method (SelectBuilder) MustSql func() (string, []interface{})
+method (SelectBuilder) Offset func(offset uint64) SelectBuilder
+method (SelectBuilder) Options func(options ...string) SelectBuilder
+method (SelectBuilder) OrderBy func(orderBys ...string) SelectBuilder
+method (SelectBuilder) OrderByClause func(pred interface{}, args ...interface{}) SelectBuilder
+method (SelectBuilder) PlaceholderFormat func(f PlaceholderFormat) SelectBuilder
+method (SelectBuilder) Prefix func(sql string, args ...interface{}) SelectBuilder
+method (SelectBuilder) PrefixExpr func(expr Sqlizer) SelectBuilder
+method (SelectBuilder) Query func() (*sql.Rows, error)
+method (SelectBuilder) QueryContext func(ctx context.Context) (*sql.Rows, error)
+method (SelectBuilder) QueryRow func() RowScanner
+method (SelectBuilder) QueryRowContext func(ctx context.Context) RowScanner
+method (SelectBuilder) RemoveColumns func() SelectBuilder
+method (SelectBuilder) RemoveLimit func() SelectBuilder
+method (SelectBuilder) RemoveOffset func() SelectBuilder
+method (SelectBuilder) RightJoin func(join string, rest ...interface{}) SelectBuilder
+method (SelectBuilder) RunWith func(runner BaseRunner) SelectBuilder
+method (SelectBuilder) Scan func(dest ...interface{}) error
+method (SelectBuilder) ScanContext func(ctx context.Context, dest ...interface{}) error
+method (SelectBuilder) Suffix func(sql string, args ...interface{}) SelectBuilder
+method (SelectBuilder) SuffixExpr func(expr Sqlizer) SelectBuilder
+method (SelectBuilder) ToSql func() (string, []interface{}, error)
+method (SelectBuilder) Where func(pred interface{}, args ...interface{}) SelectBuilder
+method (StatementBuilderType) Delete func(from string) DeleteBuilder
+method (StatementBuilderType) Insert func(into string) InsertBuilder
+method (StatementBuilderType) PlaceholderFormat func(f PlaceholderFormat) StatementBuilderType
+method (StatementBuilderType) Replace func(into string) InsertBuilder
+method (StatementBuilderType) RunWith func(runner BaseRunner) StatementBuilderType
+method (StatementBuilderType) Select func(columns ...string) SelectBuilder
+method (StatementBuilderType) Update func(table string) UpdateBuilder
+method (StatementBuilderType) Where func(pred interface{}, args ...interface{}) StatementBuilderType
+method (UpdateBuilder) Exec func() (sql.Result, error)
+method (UpdateBuilder) ExecContext func(ctx context.Context) (sql.Result, error)
+method (UpdateBuilder) From func(from string) UpdateBuilder
+method (UpdateBuilder) FromSelect func(from SelectBuilder, alias string) UpdateBuilder
+method (UpdateBuilder) Limit func(limit uint64) UpdateBuilder
+method (UpdateBuilder) MustSql func() (string, []interface{})
+method (UpdateBuilder) Offset func(offset uint64) UpdateBuilder
+method (UpdateBuilder) OrderBy func(orderBys ...string) UpdateBuilder
+method (UpdateBuilder) PlaceholderFormat func(f PlaceholderFormat) UpdateBuilder
+method (UpdateBuilder) Prefix func(sql string, args ...interface{}) UpdateBuilder
+method (UpdateBuilder) PrefixExpr func(expr Sqlizer) UpdateBuilder
+method (UpdateBuilder) Query func() (*sql.Rows, error)
+method (UpdateBuilder) QueryContext func(ctx context.Context) (*sql.Rows, error)
+method (UpdateBuilder) QueryRow func() RowScanner
+method (UpdateBuilder) QueryRowContext func(ctx context.Context) RowScanner
+method (UpdateBuilder) RunWith func(runner BaseRunner) UpdateBuilder
+method (UpdateBuilder) Scan func(dest ...interface{}) error
+method (UpdateBuilder) ScanContext func(ctx context.Context, dest ...interface{}) error
+method (UpdateBuilder) Set func(column string, value interface{}) UpdateBuilder
+method (UpdateBuilder) SetMap func(clauses map[string]interface{}) UpdateBuilder
+method (UpdateBuilder) Suffix func(sql string, args ...interface{}) UpdateBuilder
+method (UpdateBuilder) SuffixExpr func(expr Sqlizer) UpdateBuilder
+method (UpdateBuilder) Table func(table string) UpdateBuilder
+method (UpdateBuilder) ToSql func() (string, []interface{}, error)
+method (UpdateBuilder) Where func(pred interface{}, args ...interface{}) UpdateBuilder
+type And conj
+type BaseRunner interface {
+	Execer
+	Queryer
+}
+type CaseBuilder builder.Builder
+type DBProxy interface {
+	Execer
+	Queryer
+	QueryRower
+	Preparer
+}
+type DBProxyBeginner interface {
+	DBProxy
+	Begin() (*sql.Tx, error)
+}
+type DBProxyContext interface {
+	Execer
+	Queryer
+	QueryRower
+	PreparerContext
+}
+type DeleteBuilder builder.Builder
+type Eq map[string]interface{}
+type Execer interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+}
+type ExecerContext interface {
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+}
+type Gt Lt
+type GtOrEq Lt
+type ILike Like
+type InsertBuilder builder.Builder
+type Like map[string]interface{}
+type Lt map[string]interface{}
+type LtOrEq Lt
+type NotEq Eq
+type NotILike Like
+type NotLike Like
+type Or conj
+type PlaceholderFormat interface {
+	ReplacePlaceholders(sql string) (string, error)
+}
+type Preparer interface {
+	Prepare(query string) (*sql.Stmt, error)
+}
+type PreparerContext interface {
+	Preparer
+	PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
+}
+type QueryRower interface {
+	QueryRow(query string, args ...interface{}) RowScanner
+}
+type QueryRowerContext interface {
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) RowScanner
+}
+type Queryer interface {
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+}
+type QueryerContext interface {
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
+}
+type Row struct {
+	RowScanner
+	err error
+}
+type RowScanner interface {
+	Scan(...interface{}) error
+}
+type Runner interface {
+	Execer
+	Queryer
+	QueryRower
+}
+type RunnerContext interface {
+	Runner
+	QueryerContext
+	QueryRowerContext
+	ExecerContext
+}
+type SelectBuilder builder.Builder
+type Sqlizer interface {
+	ToSql() (string, []interface{}, error)
+}
+type StatementBuilderType builder.Builder
+type StdSql interface {
+	Query(string, ...interface{}) (*sql.Rows, error)
+	QueryRow(string, ...interface{}) *sql.Row
+	Exec(string, ...interface{}) (sql.Result, error)
+}
+type StdSqlCtx interface {
+	StdSql
+	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
+	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
+	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
+}
+type StmtCache struct {
+	prep  Preparer
+	cache map[string]*sql.Stmt
+	mu    sync.Mutex
+}
+type UpdateBuilder builder.Builder
+var AtP 
+var Colon 
+var Dollar 
+var NoContextSupport 
+var Question 
+var RunnerNotQueryRunner 
+var RunnerNotSet 
+var StatementBuilder 
