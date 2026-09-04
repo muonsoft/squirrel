@@ -34,7 +34,7 @@ Allowed values: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`.
 | TASK-011 | DONE | TASK-010 | no | Harden retained expression helpers |
 | TASK-012 | DONE | TASK-011 | no | Harden CTE and UPDATE FROM composition |
 | TASK-013 | DONE | TASK-012 | no | Prove SQL execution in PostgreSQL |
-| TASK-014 | TODO | TASK-013 | no | Add Masterminds migration compile fixture |
+| TASK-014 | DONE | TASK-013 | no | Add Masterminds migration compile fixture |
 | TASK-015 | TODO | TASK-014 | no | Enforce CI and dependency policy |
 | TASK-016 | TODO | TASK-015 | no | Complete public documentation and audit report |
 | TASK-017 | TODO | TASK-016 | yes | Validate the v0.1.0 release candidate |
