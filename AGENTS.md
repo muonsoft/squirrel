@@ -23,7 +23,9 @@ When invoked by `scripts/ralph-loop.sh`, follow
 - Preserve final-pass placeholder numbering for nested builders.
 - Keep `github.com/lann/builder` for v0.1.0.
 - PostgreSQL integration dependencies belong only in the nested `integration` module.
-- Do not merge upstream wholesale, push branches/tags, or rewrite published history.
+- Do not merge upstream wholesale, push branches/tags, publish GitHub Releases, or
+  rewrite published history. The maintainer-dispatched Release workflow is the only
+  path authorized to push its changelog-only commit and create a release tag.
 - Preserve MIT licensing and upstream attribution.
 
 ## Work discipline
@@ -32,4 +34,5 @@ When invoked by `scripts/ralph-loop.sh`, follow
 - Keep each tracker story atomic and commit it only after its acceptance checks pass.
 - Do not mark a story `DONE` if required verification did not run successfully.
 - Never weaken tests or dependency policy merely to make a check pass.
-- Do not create the `v0.1.0` tag before the release story authorizes it.
+- Never create `v0.1.0` locally; GitHub creates it when the maintainer-dispatched
+  Release workflow publishes the verified release.

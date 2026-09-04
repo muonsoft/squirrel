@@ -57,4 +57,7 @@ correctness problem; document every intentional difference.
 - Milestones are after the compatibility decision and release-candidate validation.
 - In attended mode milestones pause the loop. `RALPH_UNATTENDED=1` bypasses milestone
   pauses but never bypasses a hard blocker.
-- Only the final release story may create local tag `v0.1.0`.
+- Local agents and scripts never create or push release tags. A maintainer dispatches
+  the GitHub Actions Release workflow from current `main`; after revalidation it may
+  push one changelog-only release commit and publish the source-only GitHub Release,
+  which creates `v0.1.0` at the verified commit.

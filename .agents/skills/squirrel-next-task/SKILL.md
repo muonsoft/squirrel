@@ -62,7 +62,8 @@ Ralph mode is active when the invocation prompt says `mode ralph`.
 - Ordinary successful story: `RELAUNCH@next`.
 - Successful milestone story in attended mode: `HUMAN@milestone`.
 - Successful milestone in unattended mode: `RELAUNCH@next`.
-- TASK-018 successful with verified local tag: `COMPLETE`.
+- TASK-018 successful with verified hosted release workflow and no local tag:
+  `COMPLETE`; publication remains a maintainer dispatch.
 - All stories already done: `COMPLETE`.
 - Missing source/service/tool: `STOPPED@preflight`.
 - Dirty/unexpected Git state: `STOPPED@git`.

@@ -5,12 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — planned v0.1.0
+## [Unreleased]
+
+## [0.1.0] — planned
 
 First maintained release of `github.com/muonsoft/squirrel`, based on n-r-w/squirrel
 v1.6.0 and preserving attribution to Masterminds/squirrel.
 
-#### Added
+### Added
 
 - Continuous final-pass placeholder numbering for nested builders.
 - Regression coverage for nested SELECTs, joins, expressions, columns, update values,
@@ -20,8 +22,10 @@ v1.6.0 and preserving attribution to Masterminds/squirrel.
 - Placeholder fuzz testing and a Masterminds migration compile fixture.
 - Exported API inventory, compatibility decisions, dependency policy checks, and
   upstream provenance documentation.
+- Maintainer-dispatched GitHub Release workflow with release-candidate revalidation,
+  deterministic changelog finalization, and CI-owned tag creation.
 
-#### Changed
+### Changed
 
 - Module path is `github.com/muonsoft/squirrel`.
 - The package is explicitly limited to SQL construction; execution and scanning are
@@ -32,7 +36,7 @@ v1.6.0 and preserving attribution to Masterminds/squirrel.
   transitive dependency.
 - Integration dependencies, including pgx, are isolated in `integration/go.mod`.
 
-#### Removed
+### Removed
 
 - Database execution, runner, row, and statement-cache APIs inherited from
   Masterminds/squirrel.
@@ -41,9 +45,10 @@ v1.6.0 and preserving attribution to Masterminds/squirrel.
 - pgx, scany, testdock, Docker ecosystem, testify, and `golang.org/x/exp` from the
   root module graph.
 
-#### Security
+### Security
 
 - Documented that placeholders protect values only; identifiers and raw SQL remain
   trusted-input surfaces.
 
 [Unreleased]: https://github.com/muonsoft/squirrel/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/muonsoft/squirrel/releases/tag/v0.1.0

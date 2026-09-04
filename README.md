@@ -256,6 +256,17 @@ docker compose -f docker-compose.test.yml down
 
 See [`integration/README.md`](integration/README.md) for the exact local workflow.
 
+## Releases
+
+Releases are source-only GitHub Releases published by a maintainer through the
+repository's **Release** workflow. The workflow revalidates the selected `main`
+commit, finalizes the Keep a Changelog section, pushes at most one changelog-only
+release commit, and asks GitHub to create the release tag at that verified commit.
+
+Do not create or push release tags locally. See
+[`docs/release-checklist.md`](docs/release-checklist.md) for preflight, dispatch, and
+post-release verification.
+
 ## Provenance and maintenance
 
 The implementation baseline is n-r-w/squirrel v1.6.0 at commit

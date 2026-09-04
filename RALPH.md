@@ -54,7 +54,7 @@ the outer Bash loop where no healthy Cursor process remains to invoke AgentMem.
 
 | Code | Meaning | Operator action |
 |---:|---|---|
-| 0 | Backlog completed and TASK-018 verified `v0.1.0` | Review local tag and push explicitly if desired |
+| 0 | Backlog completed and TASK-018 verified hosted release automation | Review and manually dispatch the GitHub Release workflow when ready |
 | 1 | Invalid setup, missing CLI, or unavailable AgentMem `notify.send` | Fix environment and rerun |
 | 2 | Human milestone or documented blocker | Read `var/loop-status.txt`, fix/approve, rerun |
 | 3 | Missing/invalid status or agent/logging protocol failure | Inspect status and raw NDJSON |

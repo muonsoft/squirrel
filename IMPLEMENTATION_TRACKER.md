@@ -38,7 +38,7 @@ Allowed values: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`.
 | TASK-015 | DONE | TASK-014 | no | Enforce CI and dependency policy |
 | TASK-016 | DONE | TASK-015 | no | Complete public documentation and audit report |
 | TASK-017 | DONE | TASK-016 | yes | Validate the v0.1.0 release candidate |
-| TASK-018 | TODO | TASK-017 | final | Create local v0.1.0 release |
+| TASK-018 | DONE | TASK-017 | final | Install hosted v0.1.0 release flow |
 
 ## Common story contract
 
@@ -577,32 +577,44 @@ git tag --list v0.1.0
 Milestone: after successful completion use `HUMAN@milestone` in attended mode and
 `RELAUNCH@next` in unattended mode. Missing Docker/PostgreSQL is a hard preflight stop.
 
-## TASK-018 — Create local v0.1.0 release
+## TASK-018 — Install hosted v0.1.0 release flow
 
-Objective: finalize the first maintained version after release-candidate approval.
+Objective: make the first maintained version publishable through the same audited,
+maintainer-dispatched GitHub Release pattern used by the owner's other libraries.
 
 Scope:
 
-- Confirm TASK-017 is `DONE`, its commit is reachable from HEAD, validation evidence is
-  complete, and the worktree is clean.
-- Promote the CHANGELOG Unreleased entry to `v0.1.0` dated with the current UTC date.
-- Mark this story `DONE`, create one release commit, then create annotated local tag
-  `v0.1.0` pointing at that commit.
-- Do not push the branch or any tag. Do not push upstream tags to origin.
+- Add a manual GitHub Actions Release workflow for a `v`-prefixed SemVer input. It must
+  accept only current `main`, run full release validation with real PostgreSQL, and
+  stop if `main` moves before publication.
+- Add an idempotent, tested changelog preparation script supporting the planned
+  `v0.1.0` section and future `[Unreleased]` promotion.
+- On maintainer dispatch, finalize the changelog with the UTC date, push at most one
+  changelog-only release commit, verify its ancestry, and publish a source-only GitHub
+  Release whose missing tag is created by GitHub at that exact commit.
+- Document preflight, dispatch, verification, and failure handling. Local agents and
+  scripts must not create or push the release tag.
 
 Acceptance:
 
-- `git describe --exact-match --tags HEAD` returns `v0.1.0`.
-- `git show v0.1.0` shows the release commit and annotation.
-- Worktree is clean and every tracker story is `DONE`.
+- Release publication is possible only through `workflow_dispatch` from current
+  `main`; ordinary pushes and local scripts cannot create a release tag.
+- Version/changelog tests cover invalid SemVer, planned finalization, future
+  `[Unreleased]` promotion, final-state enforcement, and idempotency.
+- The workflow reuses the repository's full aggregate validation and creates no binary
+  artifacts for this library.
+- Worktree is clean, every tracker story is `DONE`, and local `v0.1.0` is still absent.
 
 Required checks:
 
 ```bash
+bash -n scripts/*.sh
+bash scripts/prepare-release-test.sh
+bash scripts/prepare-release.sh 0.1.0 --check-only
+bash scripts/test-all.sh
 git status --short
-git describe --exact-match --tags HEAD
-git tag --list 'v0.1.0' --format='%(objecttype) %(refname:short)'
+git tag --list v0.1.0
 ```
 
-On success write `Loop: COMPLETE`. If the tag already exists at another commit, stop
-instead of moving or deleting it.
+On success write `Loop: COMPLETE`. Release publication and remote tag verification are
+subsequent maintainer operations described in `docs/release-checklist.md`.

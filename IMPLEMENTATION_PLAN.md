@@ -53,10 +53,13 @@ verified.
 
 16. Replace upstream-facing documentation and produce the compatibility/audit report.
 17. Run final clean-room validation and prepare the release candidate.
-18. After the release gate, create the local `v0.1.0` release commit/tag.
+18. Install the maintainer-dispatched GitHub Release flow that revalidates `main`,
+    finalizes the changelog, and lets GitHub create the release tag.
 
-Story 17 is the release-candidate human milestone. Story 18 is the only story allowed
-to tag the first version. The loop reports `COMPLETE` after that tag is verified.
+Story 17 is the release-candidate human milestone. Story 18 completes release
+automation without publishing. The implementation loop reports `COMPLETE` when the
+workflow and its local preparation tests are verified; actual publication remains a
+separate maintainer dispatch.
 
 ## Review model
 
