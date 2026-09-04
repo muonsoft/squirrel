@@ -32,7 +32,7 @@ Allowed values: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`.
 | TASK-009 | DONE | TASK-008 | no | Harden placeholder edges and errors |
 | TASK-010 | DONE | TASK-009 | no | Add placeholder fuzz tests |
 | TASK-011 | DONE | TASK-010 | no | Harden retained expression helpers |
-| TASK-012 | TODO | TASK-011 | no | Harden CTE and UPDATE FROM composition |
+| TASK-012 | DONE | TASK-011 | no | Harden CTE and UPDATE FROM composition |
 | TASK-013 | TODO | TASK-012 | no | Prove SQL execution in PostgreSQL |
 | TASK-014 | TODO | TASK-013 | no | Add Masterminds migration compile fixture |
 | TASK-015 | TODO | TASK-014 | no | Enforce CI and dependency policy |
