@@ -3,6 +3,7 @@ module github.com/muonsoft/squirrel/integration
 go 1.26
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/muonsoft/squirrel v0.0.0
 	github.com/stretchr/testify v1.11.1
@@ -17,7 +18,7 @@ require (
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	golang.org/x/exp v0.0.0-20260611194520-c48552f49976 // indirect
+	github.com/rogpeppe/go-internal v1.16.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -11,7 +11,9 @@ import (
 func TestSelectBuilderComplexQuery(t *testing.T) {
 
 	pool, ctx := newTestPool(t)
-	setupSQL := `
+		setupSQL := `
+DROP TABLE IF EXISTS orders CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
 	id bigserial PRIMARY KEY,
 	name text NOT NULL,
@@ -57,8 +59,8 @@ INSERT INTO orders (user_id, amount, state) VALUES
 	)
 
 	statusCase := sq.Case().
-		When(sq.Expr("u.status = ?", "active"), "active").
-		Else("inactive")
+		When(sq.Expr("u.status = ?", "active"), sq.Expr("?", "active")).
+		Else(sq.Expr("?", "inactive"))
 
 	selectQuery := sq.Select("u.id", "u.name").
 		Column(sq.Alias(sq.Coalesce(0.0, sq.Expr("os.total_amount")), "total_amount")).
@@ -137,7 +139,13 @@ INSERT INTO orders (user_id, amount, state) VALUES
 func TestSelectBuilderAllConstructs(t *testing.T) {
 
 	pool, ctx := newTestPool(t)
-	setupSQL := `
+		setupSQL := `
+DROP TABLE IF EXISTS user_groups_all CASCADE;
+DROP TABLE IF EXISTS groups_all CASCADE;
+DROP TABLE IF EXISTS orders_all CASCADE;
+DROP TABLE IF EXISTS emails_all CASCADE;
+DROP TABLE IF EXISTS users_all CASCADE;
+DROP TABLE IF EXISTS departments_all CASCADE;
 CREATE TABLE departments_all (
 	id bigserial PRIMARY KEY,
 	name text NOT NULL
