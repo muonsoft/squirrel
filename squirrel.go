@@ -13,6 +13,13 @@ import (
 //
 // ToSql returns a SQL representation of the Sqlizer, along with a slice of args
 // as passed to e.g. database/sql.Exec. It can also return an error.
+//
+// Nested custom Sqlizers participate in a parent builder's final placeholder
+// formatting only when they return raw SQL containing question-mark placeholders
+// ("?"). Use "??" to emit a literal question mark (for example PostgreSQL JSON
+// operators). Preformatted positional placeholders such as "$1" are not renumbered
+// by the parent; avoid returning them from nested Sqlizers unless the fragment is
+// fully self-contained.
 type Sqlizer interface {
 	ToSql() (string, []any, error)
 }
