@@ -1,315 +1,269 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/n-r-w/squirrel.svg)](https://pkg.go.dev/github.com/n-r-w/squirrel)
-[![Go Coverage](https://github.com/n-r-w/squirrel/wiki/coverage.svg)](https://raw.githack.com/wiki/n-r-w/squirrel/coverage.html)
-![CI Status](https://github.com/n-r-w/squirrel/actions/workflows/go.yml/badge.svg)
-[![Stability](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)
-[![Go Report](https://goreportcard.com/badge/github.com/n-r-w/squirrel)](https://goreportcard.com/badge/github.com/n-r-w/squirrel)
+# muonsoft/squirrel
 
-# Evolution of [github.com/Masterminds/squirrel](https://github.com/Masterminds/squirrel), which unfortunately has not been updated by the author for a long time
+[![Go Reference](https://pkg.go.dev/badge/github.com/muonsoft/squirrel.svg)](https://pkg.go.dev/github.com/muonsoft/squirrel)
+[![CI](https://github.com/muonsoft/squirrel/actions/workflows/go.yml/badge.svg)](https://github.com/muonsoft/squirrel/actions/workflows/go.yml)
 
-Contains breaking changes and new features (see below).
+`github.com/muonsoft/squirrel` is a small, maintained fork of
+[Masterminds/squirrel](https://github.com/Masterminds/squirrel), based on the nested
+query and PostgreSQL work in [n-r-w/squirrel](https://github.com/n-r-w/squirrel).
 
-# Squirrel - fluent SQL generator for Go
+It is a pure SQL builder: the package turns a composable Go DSL into a SQL string and
+`[]any`. It does not execute queries, scan rows, manage connections or transactions,
+or define application-level search and pagination policies.
 
-```go
-import "github.com/n-r-w/squirrel"
+The fork exists to preserve the familiar Squirrel API while making PostgreSQL
+placeholder numbering reliable across nested builders, retaining useful CTE and
+`UPDATE ... FROM` support, and keeping the root dependency graph small.
+
+## Requirements and dependencies
+
+- Go 1.25 or newer is the v0.1.0 release target. Release validation is required on
+  Go 1.25 and Go 1.26.
+- The root module depends only on `github.com/lann/builder` and its small
+  `github.com/lann/ps` transitive dependency.
+- PostgreSQL execution dependencies live in the separate `integration` module and do
+  not enter consumers' dependency graphs.
+
+Install the builder with:
+
+```bash
+go get github.com/muonsoft/squirrel
 ```
 
-**Squirrel is not an ORM.**
-
-Squirrel helps you build SQL queries from composable parts:
+## Basic usage
 
 ```go
-import sq "github.com/n-r-w/squirrel"
+package main
 
-users := sq.Select("*").From("users").Join("emails USING (email_id)")
+import (
+	"fmt"
 
-active := users.Where(sq.Eq{"deleted_at": nil})
+	sq "github.com/muonsoft/squirrel"
+)
 
-sql, args, err := active.ToSql()
+func main() {
+	query := sq.Select("id", "name").
+		From("users").
+		Where(sq.Eq{"state": "active"}).
+		OrderBy("id")
 
-sql == "SELECT * FROM users JOIN emails USING (email_id) WHERE deleted_at IS NULL"
-```
+	sql, args, err := query.ToSql()
+	if err != nil {
+		panic(err)
+	}
 
-```go
-sql, args, err := sq.
-    Insert("users").Columns("name", "age").
-    Values("moe", 13).Values("larry", sq.Expr("? + 5", 12)).
-    ToSql()
-
-sql == "INSERT INTO users (name,age) VALUES (?,?),(?,? + 5)"
-```
-
-Squirrel makes conditional query building a breeze:
-
-```go
-if len(q) > 0 {
-    users = users.Where("name LIKE ?", fmt.Sprint("%", q, "%"))
+	fmt.Println(sql)  // SELECT id, name FROM users WHERE state = ? ORDER BY id
+	fmt.Println(args) // [active]
 }
 ```
 
-Squirrel loves PostgreSQL:
+Builders follow immutable-style composition, so a base builder can be reused to
+derive independent queries.
+
+## Placeholders and nested builders
+
+Write logical placeholders as `?`. `PlaceholderFormat(Dollar)` performs one final
+replacement pass after the complete builder tree has been composed. Nested builders
+therefore share one continuous `$1 ... $N` sequence and preserve lexical argument
+order.
 
 ```go
-psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+accountIDs := sq.Select("account_id").
+	From("memberships").
+	Where("tenant_id = ?", 42)
 
-// You use question marks for placeholders...
-sql, _, _ := psql.Select("*").From("elephants").Where("name IN (?,?)", "Dumbo", "Verna").ToSql()
+query := sq.Select("id", "name").
+	From("users").
+	Where(sq.Eq{"account_id": accountIDs}).
+	Where("state = ?", "active").
+	PlaceholderFormat(sq.Dollar)
 
-/// ...squirrel replaces them using PlaceholderFormat.
-sql == "SELECT * FROM elephants WHERE name IN ($1,$2)"
+sql, args, err := query.ToSql()
+// sql:  SELECT id, name FROM users WHERE account_id IN
+//       (SELECT account_id FROM memberships WHERE tenant_id = $1) AND state = $2
+// args: []any{42, "active"}
 ```
 
-You can escape question marks by inserting two question marks:
+The same final-pass rule applies to subqueries in `WHERE`, `Eq`, `And`/`Or`, columns,
+`FROM`, joins, update values, prefixes, suffixes, and CTEs.
+
+To write a literal PostgreSQL question-mark operator, escape the question mark by
+doubling it. For example:
+
+```go
+sq.Expr("metadata ??| array[?, ?]", "priority", "owner")
+```
+
+with `Dollar` formatting becomes:
 
 ```sql
-SELECT * FROM nodes WHERE meta->'format' ??| array[?,?]
+metadata ?| array[$1, $2]
 ```
 
-will generate with the Dollar Placeholder:
+## CTE and recursive CTE
 
-```sql
-SELECT * FROM nodes WHERE meta->'format' ?| array[$1,$2]
-```
-
-## FAQ
-
-- **How can I build an IN query on composite keys / tuples, e.g. `WHERE (col1, col2) IN ((1,2),(3,4))`?**
-
-    Squirrel does not explicitly support tuples, but you can get the same effect with e.g.:
-
-    ```go
-    sq.Or{
-      sq.Eq{"col1": 1, "col2": 2},
-      sq.Eq{"col1": 3, "col2": 4}}
-    ```
-
-    ```sql
-    WHERE (col1 = 1 AND col2 = 2) OR (col1 = 3 AND col2 = 4)
-    ```
-
-    (which should produce the same query plan as the tuple version)
-
-## Breaking changes in comparison to the original [github.com/Masterminds/squirrel](https://github.com/Masterminds/squirrel)
-
-### Go version requirement
-
-Requires Go 1.26.0 or newer.
-
-### Removed all database interaction methods. Only query building functions are left
-
-Squirrel is now a pure SQL query builder. For database interaction, use:
-
-- Sqlizer.ToSql() to get the SQL query and arguments.
-- `database/sql`, <https://github.com/jackc/pgx>, etc. for executing queries.
-- <https://github.com/georgysavva/scany> for scanning rows into structs. For examples see [integration tests](./itests).
-
-### Changes in the `Case` method
-
-- To pass an integer value to the `When` and `Else` methods, you need to pass it as an int, not as a string.
-- To pass a string value to the `When` and `Else` methods, you don't need to add quotes.
-
-Before:
+`With` and `WithRecursive` accept any retained statement builder as a CTE body.
 
 ```go
-sq.Case("id").When(1, "2").When(2, "'text'").Else("4")
+query := sq.With("active_users").
+	As(sq.Select("id").From("users").Where("state = ?", "active")).
+	Select(sq.Select("id").From("active_users").Where("id > ?", 100)).
+	PlaceholderFormat(sq.Dollar)
+
+sql, args, err := query.ToSql()
+// WITH active_users AS (SELECT id FROM users WHERE state = $1)
+// SELECT id FROM active_users WHERE id > $2
 ```
 
-After:
+Use `WithRecursive`, or call `Recursive(true)`, when the CTE body contains an anchor
+and recursive term.
+
+## DML CTE
+
+CTE bodies and final statements may be `SELECT`, `INSERT`, `UPDATE`, or `DELETE`.
+This supports PostgreSQL queue/claim patterns without falling back to a raw statement:
 
 ```go
-sq.Case("id").When(1, 2).When(2, "text").Else(4)
+candidate := sq.Select("id").
+	From("jobs").
+	Where("state = ?", "ready").
+	OrderBy("id").
+	Limit(1).
+	Suffix("FOR UPDATE SKIP LOCKED")
+
+updated := sq.Update("jobs AS j").
+	Set("state", "claimed").
+	From("candidate AS c").
+	Where("j.id = c.id").
+	Suffix("RETURNING j.id, j.state")
+
+query := sq.With("candidate").As(candidate).
+	Cte("updated").As(updated).
+	Select(sq.Select("id", "state").From("updated")).
+	PlaceholderFormat(sq.Dollar)
+
+sql, args, err := query.ToSql()
 ```
 
-## New features
+## UPDATE ... FROM
 
-### Subquery support for `WHERE` clause
+`UpdateBuilder.From` and `UpdateBuilder.FromSelect` build PostgreSQL
+`UPDATE ... FROM` statements and compose with nested placeholders and suffixes:
 
 ```go
-Select("id", "name").From("users").Where(Eq{"id": Select("id").From("other_table")}).ToSql()
-// SELECT id, name FROM users WHERE id IN (SELECT id1 FROM other_table)
+query := sq.Update("accounts AS a").
+	Set("state", "disabled").
+	From("expired_accounts AS e").
+	Where("a.id = e.id").
+	Where("e.tenant_id = ?", 42).
+	Suffix("RETURNING a.id").
+	PlaceholderFormat(sq.Dollar)
 ```
 
-### Support for integer values in `CASE THEN/ELSE` clause
+## Custom Sqlizer contract
+
+Custom SQL fragments implement:
 
 ```go
-Select("id", "name").From("users").Where(Case("id").When(1, 2).When(2, 3).Else(4))
-// SELECT id, name FROM users WHERE CASE id WHEN 1 THEN 2 WHEN 2 THEN 3 ELSE 4 END
+type Sqlizer interface {
+	ToSql() (string, []any, error)
+}
 ```
 
-### Support for aggregate functions `SUM`, `COUNT`, `AVG`, `MIN`, `MAX`
+When a custom `Sqlizer` is nested inside another builder, it should return raw SQL
+with `?` placeholders if it is expected to participate in the parent's placeholder
+formatting. The parent then applies the final `Dollar`, `Colon`, or `AtP` pass.
+
+Do not return pre-numbered `$1`, `$2`, and so on from a nested custom `Sqlizer` and
+expect the parent to renumber them. Arbitrary preformatted placeholders are preserved
+as literal SQL and cannot be safely reconciled with the parent's arguments.
+
+## PostgreSQL `In` and `NotIn`
+
+The retained `In` and `NotIn` helpers intentionally use PostgreSQL array binding for
+multi-element slices:
+
+| Input | `In` | `NotIn` |
+|---|---|---|
+| scalar or one item | `column = ?` | `column <> ?` |
+| multiple items | `column =ANY(?)` | `column <>ALL(?)` |
+| subquery | `column IN (<query>)` | `column NOT IN (<query>)` |
+| empty slice | empty condition | empty condition |
+
+The multi-element slice is passed as a single bind argument. See
+[`docs/API_COMPATIBILITY.md`](docs/API_COMPATIBILITY.md) for the complete API decision
+table and compatibility details.
+
+## SQL injection boundary
+
+Values belong in placeholders:
 
 ```go
-sq.Sum(subQuery)
+query := sq.Select("id").From("users").Where("user_id = ?", userID)
 ```
 
-### Support for using slice as argument for `Column` function
+Squirrel passes these values separately in `[]any`; the database driver is responsible
+for binding them.
+
+Identifiers and raw SQL are different. Inputs passed to APIs such as `From`,
+`Column`, `Columns`, `OrderBy`, `GroupBy`, `Join`, `Prefix`, `Suffix`, or the SQL text
+of `Expr` are inserted into the generated SQL. Never pass untrusted user input to
+these positions. This package deliberately does not validate or quote arbitrary
+identifiers and is not a SQL parser or sanitizer.
+
+## Migration from Masterminds/squirrel
+
+For typical builder-only code, change the import path:
 
 ```go
-Column(sq.Expr("id = ANY(?)", []int{1,2,3}))
+import sq "github.com/muonsoft/squirrel"
 ```
 
-### Support for `IN`, `NOT` and `NOT IN` clause
+Core builders and expressions remain source-compatible where that does not conflict
+with correctness or the pure-builder boundary. `Case` follows Masterminds v1.5.4
+semantics. The following APIs are intentionally absent:
 
-```go
-In("id", []int{1, 2, 3}) // id=ANY(ARRAY[1,2,3])
-NotIn("id", subQuery) // id NOT IN (<subQuery>)
+- database execution and statement-cache APIs such as `RunWith`, `Exec`, `Query`,
+  `QueryRow`, `StmtCache`, and wrappers around `database/sql`;
+- n-r-w application-policy helpers such as `Search`, `Paginator`, `Paginate*`,
+  `SetIDColumn`, `OrderByCond`, and `EqNotEmpty`;
+- stateful select table-alias helpers; use the generic `Alias(Sqlizer, string)`
+  expression instead.
 
-Not(Select("col").From("table")) // NOT (SELECT col FROM table)
-// double NOT is removed
-Not(Not(Select("col").From("table"))) // SELECT col FROM table
+See [`MIGRATION.md`](MIGRATION.md) for migration examples and the complete list of
+intentional incompatibilities.
+
+## Validation and PostgreSQL tests
+
+Root checks:
+
+```bash
+go test ./...
+go test -race ./...
+go vet ./...
+bash scripts/check-root-deps.sh
 ```
 
-### Equal, NotEqual, Greater, GreaterOrEqual, Less, LessOrEqual functions
+PostgreSQL execution tests are in a nested module. Set `POSTGRES_TEST_DSN`, or use the
+documented Compose service:
 
-```go
-Equal(Select("col").From("table"), 1) // (SELECT col FROM table) = 1
-NotEqual(Select("col").From("table"), 1) // (SELECT col FROM table) != 1
-Greater(Select("col").From("table"), 1) // (SELECT col FROM table) > 1
-GreaterOrEqual(Select("col").From("table"), 1) // (SELECT col FROM table) >= 1
-Less(Select("col").From("table"), 1) // (SELECT col FROM table) < 1
-LessOrEqual(Select("col").From("table"), 1) // (SELECT col FROM table) <= 1
+```bash
+docker compose -f docker-compose.test.yml up -d --wait
+POSTGRES_TEST_DSN='postgres://squirrel:squirrel@localhost:54329/squirrel_test?sslmode=disable' \
+  sh -c 'cd integration && go test ./...'
+docker compose -f docker-compose.test.yml down
 ```
 
-### Coalesce expression
+See [`integration/README.md`](integration/README.md) for the exact local workflow.
 
-```go
-Coalesce("value", Select("col1").From("table1"), Select("col2").From("table2"))
-// COALESCE((SELECT col1 FROM table1), (SELECT col2 FROM table2, ?)), args = ["value"]
-```
+## Provenance and maintenance
 
-### Range function
-
-```go
-sq.Range("id", 1, 10) // id BETWEEN 1 AND 10
-sq.Range("id", 1, nil) //id >= 1
-sq.Range("id", nil, 10) // id <= 10
-```
-
-### EqNotEmpty function: ignores empty and zero values in Eq map. Useful for filtering
-
-```go
-EqNotEmpty{"id1": 1, "name": nil, "id2": 0, "desc": ""} // id1 = 1
-```
-
-### OrderByCond function: can be used to avoid hardcoding column names in the code
-
-```go
-columns := map[int]string{1: "id", 2: "created"}
-orderConds := []OrderCond{{1, Asc}, {2, Desc}, {1, Desc}} // duplicate should be ignored
-
-Select("id").From("users").OrderByCond(columns, orderConds)
-// SELECT id FROM users ORDER BY id ASC, created DESC
-```
-
-### Search function
-
-The search condition is a WHERE clause with LIKE expressions. All columns will be converted to text. Value can be a string or a number.
-
-```go
-Select("id", "name").From("users").Search("John", "name", "email")
-// SELECT id, name FROM users WHERE (name::text LIKE ? OR email::text LIKE ?)
-// args = ["%John%", "%John%"]
-```
-
-### PaginateByID: adds a LIMIT and start from ID condition to the query. WARNING: The columnID must be included in the ORDER BY clause to avoid unexpected results
-
-```go
-Select("id", "name").From("users").PaginateByID(10, 20, "id").OrderBy("id ASC")
-// SELECT id, name FROM users WHERE id > ? ORDER BY id ASC LIMIT 10
-// args = [20]
-```
-
-### PaginateByPage: adds a LIMIT and OFFSET to the query. WARNING: The columnID must be included in the ORDER BY clause to avoid unexpected results
-
-```go
-Select("id", "name").From("users").PaginateByPage(10, 3).OrderBy("id ASC")
-// SELECT id, name FROM users ORDER BY id ASC LIMIT 10 OFFSET 20
-```
-
-### Paginate: allows you to use separated Paginator object to paginate the query
-
-It's useful when you want to use the same Paginator object in different application layers.
-In following example, SetIDColumn method is used to specify the column name that will be used to paginate the query. If not set, error will be returned. It's required for combination with Paginate and PaginatorByID methods.
-
-```go
-Select("id", "name").From("users").Paginate(PaginatorByID(10, 20)).SetIDColumn("id").OrderBy("id ASC")
-// SELECT id, name FROM users WHERE id > ? ORDER BY id ASC LIMIT 10
-```
-
-```go
-Select("id", "name").From("users").Paginate(PaginatorByPage(10, 3)).OrderBy("id ASC")
-// SELECT id, name FROM users ORDER BY id ASC LIMIT 10 OFFSET 20
-```
-
-### Alias for Select statement: allows to use table alias in the query for multiple columns and add prefix to the column names if needed
-
-```go
-Select().
-Alias("u").Columns("id", "name").
-From("users u")
-Alias("u").GroupBy("id", "name").
-Alias("u").OrderBy("id").
-// SELECT u.id, u.name FROM users u GROUP BY u.id, u.name ORDER BY u.id
-
-Select().
-Alias("u", "pref").Columns("id", "name").
-From("users u")
-Alias("u", "pref").GroupBy("id", "name").
-Alias("u", "pref").OrderBy("id").
-// SELECT SELECT u.id AS pref_id, u.name AS pref_name FROM users u GROUP BY u.id AS pref_id, u.name AS pref_name ORDER BY u.id AS pref_id
-```
-
-### CTE support (taken from <https://github.com/joshring/squirrel>)
-
-`As` accepts any `Sqlizer`, including `SelectBuilder`, `InsertBuilder`, `UpdateBuilder`, and `DeleteBuilder`.
-Use this for PostgreSQL DML CTE bodies such as `UPDATE ... RETURNING` without raw `Expr`.
-
-```go
-With("alias").As(
-  Select("col1").From("table"),
-).Select(
-  Select("col2").From("alias"),
-)
-// WITH alias AS (SELECT col1 FROM table) SELECT col2 FROM alias
-
-WithRecursive("alias").As(
-  Select("col1").From("table"),
-).Select(
-  Select("col2").From("alias"),
-)
-// WITH RECURSIVE alias AS (SELECT col1 FROM table) SELECT col2 FROM alias
-
-candidate := Select("id").
-  From("delivery_messages").
-  Where("state = ?", "ready").
-  OrderBy("id").
-  Limit(1).
-  Suffix("FOR UPDATE SKIP LOCKED")
-
-picked := Select("id").From("candidate")
-
-updated := Update("delivery_messages dm").
-  Set("state", "claimed").
-  From("picked p").
-  Where("dm.id = p.id").
-  Suffix("RETURNING dm.id, dm.state")
-
-With("candidate").As(candidate).
-  Cte("picked").As(picked).
-  Cte("updated").As(updated).
-  Select(
-    Select("id", "state").
-      From("updated").
-      OrderBy("id"),
-  )
-// WITH candidate AS (SELECT id FROM delivery_messages WHERE state = ? ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED), picked AS (SELECT id FROM candidate), updated AS (UPDATE delivery_messages dm SET state = ? FROM picked p WHERE dm.id = p.id RETURNING dm.id, dm.state) SELECT id, state FROM updated ORDER BY id
-```
-
-## Miscellaneous
-
-- Added a linter and fixed all warnings.
+The implementation baseline is n-r-w/squirrel v1.6.0 at commit
+`4c87dbba0f35938b7af0171bf00c4276238e7907`. Upstream changes are reviewed and ported
+individually; upstream branches are not merged wholesale. See [`UPSTREAM.md`](UPSTREAM.md)
+for provenance and update policy.
 
 ## License
 
-Squirrel is released under the
-[MIT License](http://www.opensource.org/licenses/MIT).
+This project is released under the [MIT License](LICENSE). The original copyright
+notices and attribution are preserved.
