@@ -178,7 +178,7 @@ func (d *updateData) ToSql() (sqlStr string, args []any, err error) {
 type UpdateBuilder builder.Builder
 
 func init() { //nolint:gochecknoinits // required to register UpdateBuilder
-	builder.Register(UpdateBuilder{}, updateData{}) //nolint:exhaustruct // empty struct is fine
+	builder.Register(UpdateBuilder{}, updateData{})
 }
 
 // Format methods

@@ -11,7 +11,7 @@ import (
 func TestWriteBuildersWithReturning(t *testing.T) {
 
 	pool, ctx := newTestPool(t)
-		setupSQL := `
+	setupSQL := `
 DROP TABLE IF EXISTS sales CASCADE;
 DROP TABLE IF EXISTS archived_products CASCADE;
 DROP TABLE IF EXISTS products CASCADE;

@@ -11,7 +11,7 @@ import (
 func TestSelectBuilderComplexQuery(t *testing.T) {
 
 	pool, ctx := newTestPool(t)
-		setupSQL := `
+	setupSQL := `
 DROP TABLE IF EXISTS orders CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
@@ -139,7 +139,7 @@ INSERT INTO orders (user_id, amount, state) VALUES
 func TestSelectBuilderAllConstructs(t *testing.T) {
 
 	pool, ctx := newTestPool(t)
-		setupSQL := `
+	setupSQL := `
 DROP TABLE IF EXISTS user_groups_all CASCADE;
 DROP TABLE IF EXISTS groups_all CASCADE;
 DROP TABLE IF EXISTS orders_all CASCADE;

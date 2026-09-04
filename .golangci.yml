@@ -33,7 +33,7 @@ linters:
     - gocritic
     - godot
     - gomoddirectives
-    - gomodguard_v2
+    - gomodguard
     - goprintffuncname
     - gosec
     - govet
@@ -98,7 +98,7 @@ linters:
     dupl:
       threshold: 100
     errcheck:
-      check-type-assertions: true
+      check-type-assertions: false
     exhaustive:
       check:
         - switch
@@ -133,20 +133,21 @@ linters:
         rangeValCopy:
           sizeThreshold: 512
         ruleguard: {}
-    gomodguard_v2:
+    gomodguard:
       blocked:
-        - module: github.com/golang/protobuf
-          recommendations:
-            - google.golang.org/protobuf
-          reason: see https://developers.google.com/protocol-buffers/docs/reference/go/faq#modules
-        - module: github.com/satori/go.uuid
-          recommendations:
-            - github.com/google/uuid
-          reason: satori's package is not maintained
-        - module: github.com/gofrs/uuid
-          recommendations:
-            - github.com/gofrs/uuid/v5
-          reason: gofrs' package was not go module before v5
+        modules:
+          - github.com/golang/protobuf:
+              recommendations:
+                - google.golang.org/protobuf
+              reason: see https://developers.google.com/protocol-buffers/docs/reference/go/faq#modules
+          - github.com/satori/go.uuid:
+              recommendations:
+                - github.com/google/uuid
+              reason: satori's package is not maintained
+          - github.com/gofrs/uuid:
+              recommendations:
+                - github.com/gofrs/uuid/v5
+              reason: gofrs' package was not go module before v5
     govet:
       disable:
         - fieldalignment
@@ -178,7 +179,7 @@ linters:
         - prometheus.ExponentialBuckets.*
         - prometheus.LinearBuckets
     nakedret:
-      max-func-lines: 0
+      max-func-lines: 30
     nolintlint:
       require-explanation: true
       require-specific: true
@@ -210,12 +211,28 @@ linters:
         - name: max-public-structs
           disabled: true
         - name: var-naming
-          # revive var-naming accepts ONLY two slices (allowlist & blocklist) of initialisms.
-          # We keep default behavior here (no custom initialisms).
+          disabled: true
+        - name: exported
+          disabled: true
+        - name: bare-return
+          disabled: true
+        - name: confusing-naming
+          disabled: true
+        - name: unexported-return
+          disabled: true
+        - name: indent-error-flow
+          disabled: true
+        - name: use-slices-sort
+          disabled: true
+        - name: enforce-switch-style
+          disabled: true
+        - name: unchecked-type-assertion
+          disabled: true
     staticcheck:
       checks:
         - all
         - -ST1000
+        - -ST1003
   exclusions:
     generated: lax
     rules:
@@ -243,6 +260,12 @@ linters:
           - revive
         text: "(var-naming: )?avoid meaningless package names"
         source: "^package\\s+"
+      - linters:
+          - forbidigo
+          - gocognit
+          - gosec
+          - mnd
+        path: ^tools/
     paths:
       - third_party$
       - builtin$

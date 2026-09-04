@@ -189,4 +189,3 @@ func countBindingPlaceholders(sql string) int {
 	}
 	return count
 }
-

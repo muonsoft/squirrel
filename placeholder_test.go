@@ -62,7 +62,7 @@ func TestEscapeAtp(t *testing.T) {
 func BenchmarkPlaceholdersArray(b *testing.B) {
 	var count = b.N
 	placeholders := make([]string, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		placeholders[i] = "?"
 	}
 	var _ = strings.Join(placeholders, ",")

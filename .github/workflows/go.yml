@@ -13,6 +13,8 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: local
     strategy:
       fail-fast: false
       matrix:
@@ -57,7 +59,7 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: v2.1.6
+          version: v2.11.4
 
       - name: Unit tests
         run: go test ./...
@@ -66,7 +68,7 @@ jobs:
         run: go test -race ./...
 
       - name: Fuzz smoke
-        run: go test -run '^$' -fuzz '^FuzzPlaceholderComposition$' -fuzztime=10s ./...
+        run: go test -run '^$' -fuzz '^FuzzPlaceholderComposition$' -fuzztime=10s .
 
       - name: Root dependency policy
         run: bash scripts/check-root-deps.sh

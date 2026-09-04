@@ -37,7 +37,7 @@ Allowed values: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`.
 | TASK-014 | DONE | TASK-013 | no | Add Masterminds migration compile fixture |
 | TASK-015 | DONE | TASK-014 | no | Enforce CI and dependency policy |
 | TASK-016 | DONE | TASK-015 | no | Complete public documentation and audit report |
-| TASK-017 | TODO | TASK-016 | yes | Validate the v0.1.0 release candidate |
+| TASK-017 | DONE | TASK-016 | yes | Validate the v0.1.0 release candidate |
 | TASK-018 | TODO | TASK-017 | final | Create local v0.1.0 release |
 
 ## Common story contract

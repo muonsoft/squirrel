@@ -8,7 +8,7 @@ import (
 )
 
 func init() { //nolint:gochecknoinits // required to register CaseBuilder
-	builder.Register(CaseBuilder{}, caseData{}) //nolint:exhaustruct // empty struct is fine
+	builder.Register(CaseBuilder{}, caseData{})
 }
 
 // sqlizerBuffer is a helper that allows to write many Sqlizers one by one

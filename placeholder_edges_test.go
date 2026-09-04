@@ -59,6 +59,8 @@ func TestPostgreSQLJSONOperatorEscapes_Dollar(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			q := Select("id").From("nodes").PlaceholderFormat(Dollar)
 			if len(tc.args) > 0 {
 				q = q.Where(tc.where, tc.args...)
@@ -174,51 +176,71 @@ func TestBuilderValidationErrors(t *testing.T) {
 	t.Parallel()
 
 	t.Run("select without columns", func(t *testing.T) {
+		t.Parallel()
+
 		_, _, err := Select().From("users").ToSql()
 		assertValidationError(t, err, "select statements must have at least one result column")
 	})
 
 	t.Run("insert without table", func(t *testing.T) {
+		t.Parallel()
+
 		_, _, err := Insert("").Values(1).ToSql()
 		assertValidationError(t, err, "insert statements must specify a table")
 	})
 
 	t.Run("insert without values or select", func(t *testing.T) {
+		t.Parallel()
+
 		_, _, err := Insert("users").ToSql()
 		assertValidationError(t, err, "insert statements must have at least one set of values or select clause")
 	})
 
 	t.Run("insert nested select without columns", func(t *testing.T) {
+		t.Parallel()
+
 		_, _, err := Insert("users").Select(Select().From("accounts")).ToSql()
 		assertValidationError(t, err, "select statements must have at least one result column")
 	})
 
 	t.Run("cte without body", func(t *testing.T) {
+		t.Parallel()
+
 		_, _, err := With("scope").Select(Select("id").From("users")).ToSql()
 		assertValidationError(t, err, "common table expressions statements must have at least one label and subquery")
 	})
 
 	t.Run("cte without final statement", func(t *testing.T) {
+		t.Parallel()
+
 		_, _, err := With("scope").As(Select("id").From("users")).ToSql()
 		assertValidationError(t, err, "common table expressions must one of the following final statement")
 	})
 
 	t.Run("unsupported concat expression type", func(t *testing.T) {
+		t.Parallel()
+
 		_, _, err := ConcatExpr("prefix", 123, "suffix").ToSql()
 		assertValidationError(t, err, "is not a string or Sqlizer")
 	})
 
 	t.Run("invalid where part type", func(t *testing.T) {
+		t.Parallel()
+
 		_, _, err := newWherePart(123).ToSql()
 		assertValidationError(t, err, "expected string-keyed map or string")
 	})
 
 	t.Run("invalid part type", func(t *testing.T) {
+		t.Parallel()
+
 		_, _, err := newPart(123).ToSql()
 		assertValidationError(t, err, "expected string or Sqlizer")
 	})
 
 	t.Run("nested failing sqlizer in where", func(t *testing.T) {
+		t.Parallel()
+
 		_, _, err := Select("id").
 			From("users").
 			Where(failingSqlizer{}).
@@ -227,6 +249,8 @@ func TestBuilderValidationErrors(t *testing.T) {
 	})
 
 	t.Run("nested failing sqlizer in prefix", func(t *testing.T) {
+		t.Parallel()
+
 		_, _, err := Select("id").
 			PrefixExpr(failingSqlizer{}).
 			From("users").

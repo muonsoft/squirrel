@@ -94,9 +94,9 @@ func (ce concatExpr) ToSql() (sql string, args []any, err error) {
 		case string:
 			sql += p
 		case Sqlizer:
-			pSql, pArgs, err := nestedToSql(p)
-			if err != nil {
-				return "", nil, err
+			pSql, pArgs, nestedErr := nestedToSql(p)
+			if nestedErr != nil {
+				return "", nil, nestedErr
 			}
 			sql += pSql
 			args = append(args, pArgs...)
@@ -194,7 +194,7 @@ func buildListExpr(key string, val any, ops eqOperators, args []any) (sql string
 		return ops.inEmpty, args
 	}
 
-	for i := 0; i < valVal.Len(); i++ {
+	for i := range valVal.Len() {
 		args = append(args, valVal.Index(i).Interface())
 	}
 	return fmt.Sprintf("%s %s (%s)", key, ops.in, Placeholders(valVal.Len())), args
@@ -431,9 +431,9 @@ func (c conj) join(sep, defaultExpr string) (sql string, args []any, err error) 
 	}
 	var sqlParts []string
 	for _, sqlizer := range c {
-		partSQL, partArgs, err := nestedToSql(sqlizer)
-		if err != nil {
-			return "", nil, err
+		partSQL, partArgs, nestedErr := nestedToSql(sqlizer)
+		if nestedErr != nil {
+			return "", nil, nestedErr
 		}
 		if partSQL != "" {
 			sqlParts = append(sqlParts, partSQL)
@@ -736,7 +736,7 @@ type inExpr struct {
 //
 // An empty slice produces an empty condition (no SQL, no args).
 //
-// Ex: SelectBuilder.Where(In("id", []int{1, 2, 3}))
+// Ex: SelectBuilder.Where(In("id", []int{1, 2, 3})).
 func In(column string, e any) inExpr {
 	return inExpr{column, e}
 }
@@ -757,7 +757,7 @@ type notInExpr inExpr
 //
 // An empty slice produces an empty condition (no SQL, no args).
 //
-// Ex: SelectBuilder.Where(NotIn("id", subQuery))
+// Ex: SelectBuilder.Where(NotIn("id", subQuery)).
 func NotIn(column string, e any) notInExpr {
 	return notInExpr{column, e}
 }

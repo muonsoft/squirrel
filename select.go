@@ -186,7 +186,7 @@ func (d *selectData) toSqlRaw() (sqlStr string, args []any, err error) {
 type SelectBuilder builder.Builder
 
 func init() { //nolint:gochecknoinits // required to register SelectBuilder
-	builder.Register(SelectBuilder{}, selectData{}) //nolint:exhaustruct // empty struct is fine
+	builder.Register(SelectBuilder{}, selectData{})
 }
 
 // Format methods

@@ -70,7 +70,6 @@ func (d *commonTableExpressionsData) ToSql() (sql string, args []any, err error)
 type CommonTableExpressionsBuilder builder.Builder
 
 func init() { //nolint:gochecknoinits // required to register CommonTableExpressionsBuilder
-	//nolint:exhaustruct // empty struct is fine
 	builder.Register(CommonTableExpressionsBuilder{}, commonTableExpressionsData{})
 }
 
