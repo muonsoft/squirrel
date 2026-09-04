@@ -1,62 +1,98 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+name: CI
 
-name: Go
 permissions:
   contents: read
-  pull-requests: write
 
 on:
   push:
-    branches: ["master"]
+    branches: [main]
   pull_request:
-    branches: ["master"]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.25", "1.26"]
 
     services:
-      postgres_srv:
+      postgres:
         image: postgres:18.1
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: secret
-          POSTGRES_DB: postgres
-
+          POSTGRES_USER: squirrel
+          POSTGRES_PASSWORD: squirrel
+          POSTGRES_DB: squirrel_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres" 
-          --health-interval 10s 
-          --health-timeout 5s 
-          --health-retries 5
+          --health-cmd "pg_isready -U squirrel -d squirrel_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v6.2.0
+        uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
+          go-version: ${{ matrix.go-version }}
+          cache: true
 
-      - name: Build
-        run: go build -v ./...
+      - name: Format check
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "gofmt needed for:"
+            echo "$unformatted"
+            exit 1
+          fi
 
-      - name: Test
+      - name: Vet
+        run: go vet ./...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.1.6
+
+      - name: Unit tests
+        run: go test ./...
+
+      - name: Race tests
+        run: go test -race ./...
+
+      - name: Fuzz smoke
+        run: go test -run '^$' -fuzz '^FuzzPlaceholderComposition$' -fuzztime=10s ./...
+
+      - name: Root dependency policy
+        run: bash scripts/check-root-deps.sh
+
+      - name: Root module tidy check
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Module verify
+        run: go mod verify
+
+      - name: Compatibility module
+        run: |
+          cd compatibility
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+          go test ./...
+
+      - name: Integration module tidy check
+        run: |
+          cd integration
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Integration tests
         env:
-          TESTDOCK_DSN_POSTGRES: postgres://postgres:secret@localhost:5432/postgres?sslmode=disable
-        run: go test -race -tags itest -v ./...
-
-      - name: Update coverage report
-        uses: ncruces/go-coverage-report@v0.3.2
-        with:
-          report: true
-          chart: true
-          amend: true
-        continue-on-error: true
-
-      - name: Update goreportcard
-        uses: creekorful/goreportcard-action@v1.0
-        continue-on-error: true
+          POSTGRES_TEST_DSN: postgres://squirrel:squirrel@localhost:5432/squirrel_test?sslmode=disable
+        run: cd integration && go test ./...
