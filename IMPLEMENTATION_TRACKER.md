@@ -30,7 +30,7 @@ Allowed values: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`.
 | TASK-007 | DONE | TASK-006 | yes | Normalize Masterminds API compatibility |
 | TASK-008 | DONE | TASK-007 | no | Add core nested-placeholder regressions |
 | TASK-009 | DONE | TASK-008 | no | Harden placeholder edges and errors |
-| TASK-010 | TODO | TASK-009 | no | Add placeholder fuzz tests |
+| TASK-010 | DONE | TASK-009 | no | Add placeholder fuzz tests |
 | TASK-011 | TODO | TASK-010 | no | Harden retained expression helpers |
 | TASK-012 | TODO | TASK-011 | no | Harden CTE and UPDATE FROM composition |
 | TASK-013 | TODO | TASK-012 | no | Prove SQL execution in PostgreSQL |
