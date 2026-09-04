@@ -44,6 +44,29 @@ The fork restores Masterminds v1.5.4 `Case` semantics:
 See `case_test.go` (`TestCaseMastermindsSearchedCase`, `TestCaseMastermindsSimpleCase`)
 for regression coverage.
 
+## `In` / `NotIn` PostgreSQL ANY/ALL
+
+The n-r-w `In` and `NotIn` helpers use PostgreSQL-specific forms for multi-value
+comparisons instead of expanding `IN (?, ?, …)`:
+
+| Input | `In` SQL | `NotIn` SQL |
+|---|---|---|
+| scalar | `column = ?` | `column <> ?` |
+| one-element slice | `column = ?` | `column <> ?` |
+| multi-element slice | `column =ANY(?)` | `column <>ALL(?)` |
+| subquery (`Sqlizer`) | `column IN (<subquery>)` | `column NOT IN (<subquery>)` |
+| empty slice | empty condition | empty condition |
+
+The slice is passed as a single bind argument so pgx can send a PostgreSQL array.
+This is intentional fork behavior for PostgreSQL consumers; it differs from
+Masterminds, which has no `In` helper.
+
+**Architectural concern:** the `=ANY(?)` / `<>ALL(?)` rewrite is not obvious from the
+function name `In` alone. Callers migrating from other SQL builders may expect
+`IN (?, ?, ?)` expansion. The API is retained for n-r-w compatibility and pgx array
+binding; see `expr_helpers_regression_test.go` and integration execution tests for
+coverage.
+
 ## Symbol table
 
 | Symbol | Masterminds | n-r-w | Fork | Decision | Rationale |

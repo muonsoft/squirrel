@@ -728,7 +728,15 @@ type inExpr struct {
 }
 
 // In allows to use IN in SQL query.
-// Ex: SelectBuilder.Where(In("id", 1, 2, 3)).
+//
+// For a scalar value it emits "column = ?". For a one-element slice it emits
+// "column = ?" with that element. For multi-element slices it emits PostgreSQL
+// "column =ANY(?)" with the slice as a single bind argument. For a Sqlizer
+// subquery it emits "column IN (<subquery>)".
+//
+// An empty slice produces an empty condition (no SQL, no args).
+//
+// Ex: SelectBuilder.Where(In("id", []int{1, 2, 3}))
 func In(column string, e any) inExpr {
 	return inExpr{column, e}
 }
@@ -741,7 +749,15 @@ func (e inExpr) ToSql() (sql string, args []any, err error) {
 type notInExpr inExpr
 
 // NotIn allows to use NOT IN in SQL query.
-// Ex: SelectBuilder.Where(NotIn("id", 1, 2, 3)).
+//
+// For a scalar value it emits "column <> ?". For a one-element slice it emits
+// "column <> ?" with that element. For multi-element slices it emits PostgreSQL
+// "column <>ALL(?)" with the slice as a single bind argument. For a Sqlizer
+// subquery it emits "column NOT IN (<subquery>)".
+//
+// An empty slice produces an empty condition (no SQL, no args).
+//
+// Ex: SelectBuilder.Where(NotIn("id", subQuery))
 func NotIn(column string, e any) notInExpr {
 	return notInExpr{column, e}
 }
