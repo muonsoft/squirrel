@@ -4,7 +4,8 @@ set -euo pipefail
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$repo_root"
 
-# Forbidden module path fragments in the root module graph (spec §11.2 and §22).
+# Infrastructure, database execution, and assertion dependencies belong outside the
+# root pure-builder module. See docs/FOUNDATION.md.
 forbidden_patterns=(
   'github.com/jackc/pgx'
   'github.com/georgysavva/scany'

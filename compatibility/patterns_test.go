@@ -6,8 +6,8 @@ import (
 	sq "github.com/muonsoft/squirrel"
 )
 
-// Typical Masterminds migration patterns from spec §24. Each test compiles the
-// pattern and exercises ToSql() without a database connection.
+// Typical Masterminds migration patterns compile and exercise ToSql without a
+// database connection.
 func TestSelectPatterns(t *testing.T) {
 	t.Parallel()
 

@@ -9,8 +9,8 @@ workflow-verified release commit.
 
 - [ ] Work is merged to `main` and the branch is not moving during publication.
 - [ ] Normal CI is green on Go 1.25 and Go 1.26.
-- [ ] `IMPLEMENTATION_TRACKER.md` and the release audit show the intended candidate as
-      complete.
+- [ ] `docs/audits/v0.1.0-report.md` records the intended candidate as complete and
+      current `main` has passed CI.
 - [ ] `CHANGELOG.md` has either a non-empty exact planned version section or non-empty
       `[Unreleased]` section.
 - [ ] README, migration guidance, API inventory, attribution, and dependency policy

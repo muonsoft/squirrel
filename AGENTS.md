@@ -1,19 +1,18 @@
 # Project agent rules
 
-This repository is the maintained `github.com/muonsoft/squirrel` fork described in
-[`squirrel_minimal_fork_implementation_spec.md`](squirrel_minimal_fork_implementation_spec.md).
+This repository is the maintained `github.com/muonsoft/squirrel` fork.
 
 ## Sources of truth
 
 Read these before changing the library:
 
-1. `docs/FOUNDATION.md` — fixed scope and decisions.
-2. `squirrel_minimal_fork_implementation_spec.md` — full acceptance criteria.
-3. `IMPLEMENTATION_TRACKER.md` — ordered, atomic implementation stories.
-4. `UPSTREAM.md` — provenance and upstream policy.
+1. `docs/FOUNDATION.md` — fixed scope and architectural decisions.
+2. `docs/API_COMPATIBILITY.md` — public compatibility contract.
+3. `UPSTREAM.md` — provenance and upstream policy.
+4. `docs/release-checklist.md` — release procedure and verification.
 
-When invoked by `scripts/ralph-loop.sh`, follow
-`.agents/skills/squirrel-next-task/SKILL.md` exactly and execute one tracker story only.
+The post-v0.1.0 builder replacement is a separate design stream described in
+`docs/TYPED_BUILDER_EVALUATION.md`.
 
 ## Non-negotiable boundaries
 
@@ -21,7 +20,8 @@ When invoked by `scripts/ralph-loop.sh`, follow
 - The root module is a pure SQL builder. Do not add database execution, scanning,
   connection, transaction, pagination-policy, or search-policy APIs.
 - Preserve final-pass placeholder numbering for nested builders.
-- Keep `github.com/lann/builder` for v0.1.0.
+- Keep `github.com/lann/builder` through v0.1.0. Any replacement requires its own
+  reviewed and evidence-gated change stream.
 - PostgreSQL integration dependencies belong only in the nested `integration` module.
 - Do not merge upstream wholesale, push branches/tags, publish GitHub Releases, or
   rewrite published history. The maintainer-dispatched Release workflow is the only
@@ -31,8 +31,9 @@ When invoked by `scripts/ralph-loop.sh`, follow
 ## Work discipline
 
 - Preserve unrelated user changes.
-- Keep each tracker story atomic and commit it only after its acceptance checks pass.
-- Do not mark a story `DONE` if required verification did not run successfully.
+- Keep changes focused and commits atomic.
+- Update public documentation and `CHANGELOG.md` when behavior changes.
+- Run checks proportional to the change and the full release gate before publication.
 - Never weaken tests or dependency policy merely to make a check pass.
 - Never create `v0.1.0` locally; GitHub creates it when the maintainer-dispatched
   Release workflow publishes the verified release.

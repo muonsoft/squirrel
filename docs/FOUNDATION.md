@@ -52,11 +52,8 @@ correctness problem; document every intentional difference.
 
 ## Git and automation
 
-- Ralph stories commit to the current local branch; they never push.
-- One story produces one atomic, MR-sized commit.
-- Milestones are after the compatibility decision and release-candidate validation.
-- In attended mode milestones pause the loop. `RALPH_UNATTENDED=1` bypasses milestone
-  pauses but never bypasses a hard blocker.
+- Keep `main` releasable and use focused, reviewable commits.
+- Review upstream changes individually; never merge an upstream branch wholesale.
 - Local agents and scripts never create or push release tags. A maintainer dispatches
   the GitHub Actions Release workflow from current `main`; after revalidation it may
   push one changelog-only release commit and publish the source-only GitHub Release,

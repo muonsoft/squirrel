@@ -80,7 +80,7 @@ failure.
 
 ## Source integrity check
 
-Library Go sources and module files were not modified by TASK-001:
+Library Go sources and module files were not modified during baseline capture:
 
 ```bash
 git diff upstream/n-r-w-v1.6.0 -- ':(top,glob)*.go' go.mod go.sum
@@ -90,20 +90,20 @@ git diff upstream/n-r-w-v1.6.0 -- ':(top,glob)*.go' go.mod go.sum
 Audit tooling under `tools/api-surface/`, `scripts/generate-api-inventory.sh`, and
 this directory are the only additions.
 
-## Root dependency minimization (TASK-006)
+## Root dependency minimization
 
 Captured 2026-09-02 after converting root tests from testify to standard-library
 helpers and running `go mod tidy`.
 
 | State | Direct requires | Full module list |
 |---|---|---|
-| Before TASK-006 | `lann/builder`, `testify` | `task-006-modules-before.txt` (17 modules) |
-| After TASK-006 | `lann/builder` only | `task-006-modules-after.txt` (3 modules) |
+| Before cleanup | `lann/builder`, `testify` | `root-modules-before-cleanup.txt` (17 modules) |
+| After cleanup | `lann/builder` only | `root-modules-after-cleanup.txt` (3 modules) |
 
 Removed from the root graph: `testify` and its transitive test-only dependencies
 (`go-spew`, `difflib`, `yaml.v3`, `check.v1`, and related tooling modules).
 
-Verification after TASK-006:
+Verification after cleanup:
 
 ```bash
 go mod tidy

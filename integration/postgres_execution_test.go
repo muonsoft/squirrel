@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestSpec15PostgreSQLExecution proves every integration scenario from spec §15
+// TestPostgreSQLExecutionScenarios proves the supported SQL-builder scenarios
 // against a real PostgreSQL database through pgx bind arguments.
-func TestSpec15PostgreSQLExecution(t *testing.T) {
+func TestPostgreSQLExecutionScenarios(t *testing.T) {
 	pool, ctx := newTestPool(t)
 
 	t.Run("simple select", func(t *testing.T) {
