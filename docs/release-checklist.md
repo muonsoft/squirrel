@@ -33,8 +33,8 @@ git status --short
 git tag --list v0.1.0
 ```
 
-`scripts/test-all.sh` requires `POSTGRES_TEST_DSN` or usable Docker Compose. A skipped
-PostgreSQL suite is not release evidence.
+`scripts/test-all.sh` requires `ripgrep` (`rg`), `POSTGRES_TEST_DSN` or usable Docker
+Compose. A skipped PostgreSQL suite is not release evidence.
 
 ## Dispatch the release
 
