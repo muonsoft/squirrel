@@ -7,7 +7,7 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [0.1.0] — planned
+## [0.1.0] - 2026-09-24
 
 First maintained release of `github.com/muonsoft/squirrel`, based on n-r-w/squirrel
 v1.6.0 and preserving attribution to Masterminds/squirrel.
