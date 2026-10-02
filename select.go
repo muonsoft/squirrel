@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/lann/builder"
 )
 
 type selectData struct {
@@ -183,10 +181,50 @@ func (d *selectData) toSqlRaw() (sqlStr string, args []any, err error) {
 // Builder
 
 // SelectBuilder builds SQL SELECT statements.
-type SelectBuilder builder.Builder
+type SelectBuilder struct {
+	state *selectDataState
+}
 
-func init() { //nolint:gochecknoinits // required to register SelectBuilder
-	builder.Register(SelectBuilder{}, selectData{})
+type selectDataState struct {
+	PlaceholderFormat PlaceholderFormat
+	Prefixes          immutableList[Sqlizer]
+	Options           immutableList[string]
+	Columns           immutableList[Sqlizer]
+	From              Sqlizer
+	Joins             immutableList[Sqlizer]
+	WhereParts        immutableList[Sqlizer]
+	GroupBys          immutableList[string]
+	HavingParts       immutableList[Sqlizer]
+	OrderByParts      immutableList[Sqlizer]
+	Limit             string
+	Offset            string
+	Suffixes          immutableList[Sqlizer]
+}
+
+func (b SelectBuilder) clone() selectDataState {
+	if b.state == nil {
+		return selectDataState{}
+	}
+	return *b.state
+}
+
+func (b SelectBuilder) data() selectData {
+	state := b.clone()
+	return selectData{
+		PlaceholderFormat: state.PlaceholderFormat,
+		Prefixes:          state.Prefixes.slice(),
+		Options:           state.Options.slice(),
+		Columns:           state.Columns.slice(),
+		From:              state.From,
+		Joins:             state.Joins.slice(),
+		WhereParts:        state.WhereParts.slice(),
+		GroupBys:          state.GroupBys.slice(),
+		HavingParts:       state.HavingParts.slice(),
+		OrderByParts:      state.OrderByParts.slice(),
+		Limit:             state.Limit,
+		Offset:            state.Offset,
+		Suffixes:          state.Suffixes.slice(),
+	}
 }
 
 // Format methods
@@ -194,19 +232,21 @@ func init() { //nolint:gochecknoinits // required to register SelectBuilder
 // PlaceholderFormat sets PlaceholderFormat (e.g. Question or Dollar) for the
 // query.
 func (b SelectBuilder) PlaceholderFormat(f PlaceholderFormat) SelectBuilder {
-	return builder.Set(b, "PlaceholderFormat", f).(SelectBuilder)
+	next := b.clone()
+	next.PlaceholderFormat = f
+	return SelectBuilder{state: &next}
 }
 
 // SQL methods
 
 // ToSql builds the query into a SQL string and bound args.
 func (b SelectBuilder) ToSql() (sql string, args []any, err error) {
-	data := builder.GetStruct(b).(selectData)
+	data := b.data()
 	return data.ToSql()
 }
 
 func (b SelectBuilder) toSqlRaw() (sql string, args []any, err error) {
-	data := builder.GetStruct(b).(selectData)
+	data := b.data()
 	return data.toSqlRaw()
 }
 
@@ -227,7 +267,9 @@ func (b SelectBuilder) Prefix(sql string, args ...any) SelectBuilder {
 
 // PrefixExpr adds an expression to the very beginning of the query.
 func (b SelectBuilder) PrefixExpr(e Sqlizer) SelectBuilder {
-	return builder.Append(b, "Prefixes", e).(SelectBuilder)
+	next := b.clone()
+	next.Prefixes = appendPersistent(next.Prefixes, e)
+	return SelectBuilder{state: &next}
 }
 
 // Distinct adds a DISTINCT clause to the query.
@@ -237,23 +279,29 @@ func (b SelectBuilder) Distinct() SelectBuilder {
 
 // Options adds select option to the query.
 func (b SelectBuilder) Options(options ...string) SelectBuilder {
-	return builder.Extend(b, "Options", options).(SelectBuilder)
+	next := b.clone()
+	next.Options = appendPersistent(next.Options, options...)
+	return SelectBuilder{state: &next}
 }
 
 // Columns adds result columns to the query.
 func (b SelectBuilder) Columns(columns ...string) SelectBuilder {
-	parts := make([]any, 0, len(columns))
+	parts := make([]Sqlizer, 0, len(columns))
 	for _, str := range columns {
 		parts = append(parts, newPart(str))
 	}
-	return builder.Extend(b, "Columns", parts).(SelectBuilder)
+	next := b.clone()
+	next.Columns = appendPersistent(next.Columns, parts...)
+	return SelectBuilder{state: &next}
 }
 
 // RemoveColumns remove all columns from query.
 // Must add a new column with Column or Columns methods, otherwise
 // return a error.
 func (b SelectBuilder) RemoveColumns() SelectBuilder {
-	return builder.Delete(b, "Columns").(SelectBuilder)
+	next := b.clone()
+	next.Columns = immutableList[Sqlizer]{}
+	return SelectBuilder{state: &next}
 }
 
 // Column adds a result column to the query.
@@ -262,22 +310,30 @@ func (b SelectBuilder) RemoveColumns() SelectBuilder {
 //
 //	Column("IF(col IN ("+squirrel.Placeholders(3)+"), 1, 0) as col", 1, 2, 3)
 func (b SelectBuilder) Column(column any, args ...any) SelectBuilder {
-	return builder.Append(b, "Columns", newPart(column, args...)).(SelectBuilder)
+	next := b.clone()
+	next.Columns = appendPersistent(next.Columns, newPart(column, args...))
+	return SelectBuilder{state: &next}
 }
 
 // From sets the FROM clause of the query.
 func (b SelectBuilder) From(from string) SelectBuilder {
-	return builder.Set(b, "From", newPart(from)).(SelectBuilder)
+	next := b.clone()
+	next.From = newPart(from)
+	return SelectBuilder{state: &next}
 }
 
 // FromSelect sets a subquery into the FROM clause of the query.
 func (b SelectBuilder) FromSelect(from SelectBuilder, alias string) SelectBuilder {
-	return builder.Set(b, "From", Alias(from, alias)).(SelectBuilder)
+	next := b.clone()
+	next.From = Alias(from, alias)
+	return SelectBuilder{state: &next}
 }
 
 // JoinClause adds a join clause to the query.
 func (b SelectBuilder) JoinClause(pred any, args ...any) SelectBuilder {
-	return builder.Append(b, "Joins", newPart(pred, args...)).(SelectBuilder)
+	next := b.clone()
+	next.Joins = appendPersistent(next.Joins, newPart(pred, args...))
+	return SelectBuilder{state: &next}
 }
 
 // Join adds a JOIN clause to the query.
@@ -329,24 +385,32 @@ func (b SelectBuilder) Where(pred any, args ...any) SelectBuilder {
 	if pred == nil || pred == "" {
 		return b
 	}
-	return builder.Append(b, "WhereParts", newWherePart(pred, args...)).(SelectBuilder)
+	next := b.clone()
+	next.WhereParts = appendPersistent(next.WhereParts, newWherePart(pred, args...))
+	return SelectBuilder{state: &next}
 }
 
 // GroupBy adds GROUP BY expressions to the query.
 func (b SelectBuilder) GroupBy(groupBys ...string) SelectBuilder {
-	return builder.Extend(b, "GroupBys", groupBys).(SelectBuilder)
+	next := b.clone()
+	next.GroupBys = appendPersistent(next.GroupBys, groupBys...)
+	return SelectBuilder{state: &next}
 }
 
 // Having adds an expression to the HAVING clause of the query.
 //
 // See Where.
 func (b SelectBuilder) Having(pred any, rest ...any) SelectBuilder {
-	return builder.Append(b, "HavingParts", newWherePart(pred, rest...)).(SelectBuilder)
+	next := b.clone()
+	next.HavingParts = appendPersistent(next.HavingParts, newWherePart(pred, rest...))
+	return SelectBuilder{state: &next}
 }
 
 // OrderByClause adds ORDER BY clause to the query.
 func (b SelectBuilder) OrderByClause(pred any, args ...any) SelectBuilder {
-	return builder.Append(b, "OrderByParts", newPart(pred, args...)).(SelectBuilder)
+	next := b.clone()
+	next.OrderByParts = appendPersistent(next.OrderByParts, newPart(pred, args...))
+	return SelectBuilder{state: &next}
 }
 
 // OrderBy adds ORDER BY expressions to the query.
@@ -360,22 +424,30 @@ func (b SelectBuilder) OrderBy(orderBys ...string) SelectBuilder {
 
 // Limit sets a LIMIT clause on the query.
 func (b SelectBuilder) Limit(limit uint64) SelectBuilder {
-	return builder.Set(b, "Limit", strconv.FormatUint(limit, 10)).(SelectBuilder)
+	next := b.clone()
+	next.Limit = strconv.FormatUint(limit, 10)
+	return SelectBuilder{state: &next}
 }
 
 // RemoveLimit removes LIMIT clause allowing access to all records.
 func (b SelectBuilder) RemoveLimit() SelectBuilder {
-	return builder.Delete(b, "Limit").(SelectBuilder)
+	next := b.clone()
+	next.Limit = ""
+	return SelectBuilder{state: &next}
 }
 
 // Offset sets a OFFSET clause on the query.
 func (b SelectBuilder) Offset(offset uint64) SelectBuilder {
-	return builder.Set(b, "Offset", strconv.FormatUint(offset, 10)).(SelectBuilder)
+	next := b.clone()
+	next.Offset = strconv.FormatUint(offset, 10)
+	return SelectBuilder{state: &next}
 }
 
 // RemoveOffset removes OFFSET clause.
 func (b SelectBuilder) RemoveOffset() SelectBuilder {
-	return builder.Delete(b, "Offset").(SelectBuilder)
+	next := b.clone()
+	next.Offset = ""
+	return SelectBuilder{state: &next}
 }
 
 // Suffix adds an expression to the end of the query.
@@ -385,7 +457,9 @@ func (b SelectBuilder) Suffix(sql string, args ...any) SelectBuilder {
 
 // SuffixExpr adds an expression to the end of the query.
 func (b SelectBuilder) SuffixExpr(e Sqlizer) SelectBuilder {
-	return builder.Append(b, "Suffixes", e).(SelectBuilder)
+	next := b.clone()
+	next.Suffixes = appendPersistent(next.Suffixes, e)
+	return SelectBuilder{state: &next}
 }
 
 // With adds a CTE (Common Table Expression) to the query.

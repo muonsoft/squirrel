@@ -7,8 +7,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/lann/builder"
 )
 
 type updateData struct {
@@ -175,10 +173,44 @@ func (d *updateData) ToSql() (sqlStr string, args []any, err error) {
 // Builder
 
 // UpdateBuilder builds SQL UPDATE statements.
-type UpdateBuilder builder.Builder
+type UpdateBuilder struct {
+	state *updateDataState
+}
 
-func init() { //nolint:gochecknoinits // required to register UpdateBuilder
-	builder.Register(UpdateBuilder{}, updateData{})
+type updateDataState struct {
+	PlaceholderFormat PlaceholderFormat
+	Prefixes          immutableList[Sqlizer]
+	Table             string
+	SetClauses        immutableList[setClause]
+	From              Sqlizer
+	WhereParts        immutableList[Sqlizer]
+	OrderBys          immutableList[string]
+	Limit             string
+	Offset            string
+	Suffixes          immutableList[Sqlizer]
+}
+
+func (b UpdateBuilder) clone() updateDataState {
+	if b.state == nil {
+		return updateDataState{}
+	}
+	return *b.state
+}
+
+func (b UpdateBuilder) data() updateData {
+	state := b.clone()
+	return updateData{
+		PlaceholderFormat: state.PlaceholderFormat,
+		Prefixes:          state.Prefixes.slice(),
+		Table:             state.Table,
+		SetClauses:        state.SetClauses.slice(),
+		From:              state.From,
+		WhereParts:        state.WhereParts.slice(),
+		OrderBys:          state.OrderBys.slice(),
+		Limit:             state.Limit,
+		Offset:            state.Offset,
+		Suffixes:          state.Suffixes.slice(),
+	}
 }
 
 // Format methods
@@ -186,14 +218,16 @@ func init() { //nolint:gochecknoinits // required to register UpdateBuilder
 // PlaceholderFormat sets PlaceholderFormat (e.g. Question or Dollar) for the
 // query.
 func (b UpdateBuilder) PlaceholderFormat(f PlaceholderFormat) UpdateBuilder {
-	return builder.Set(b, "PlaceholderFormat", f).(UpdateBuilder)
+	next := b.clone()
+	next.PlaceholderFormat = f
+	return UpdateBuilder{state: &next}
 }
 
 // SQL methods
 
 // ToSql builds the query into a SQL string and bound args.
 func (b UpdateBuilder) ToSql() (sql string, args []any, err error) {
-	data := builder.GetStruct(b).(updateData)
+	data := b.data()
 	return data.ToSql()
 }
 
@@ -214,17 +248,23 @@ func (b UpdateBuilder) Prefix(sql string, args ...any) UpdateBuilder {
 
 // PrefixExpr adds an expression to the very beginning of the query.
 func (b UpdateBuilder) PrefixExpr(e Sqlizer) UpdateBuilder {
-	return builder.Append(b, "Prefixes", e).(UpdateBuilder)
+	next := b.clone()
+	next.Prefixes = appendPersistent(next.Prefixes, e)
+	return UpdateBuilder{state: &next}
 }
 
 // Table sets the table to be updated.
 func (b UpdateBuilder) Table(table string) UpdateBuilder {
-	return builder.Set(b, "Table", table).(UpdateBuilder)
+	next := b.clone()
+	next.Table = table
+	return UpdateBuilder{state: &next}
 }
 
 // Set adds SET clauses to the query.
 func (b UpdateBuilder) Set(column string, value any) UpdateBuilder {
-	return builder.Append(b, "SetClauses", setClause{column: column, value: value}).(UpdateBuilder)
+	next := b.clone()
+	next.SetClauses = appendPersistent(next.SetClauses, setClause{column: column, value: value})
+	return UpdateBuilder{state: &next}
 }
 
 // SetMap is a convenience method which calls .Set for each key/value pair in clauses.
@@ -246,34 +286,46 @@ func (b UpdateBuilder) SetMap(clauses map[string]any) UpdateBuilder {
 // From adds FROM clause to the query
 // FROM is valid construct in postgresql only.
 func (b UpdateBuilder) From(from string) UpdateBuilder {
-	return builder.Set(b, "From", newPart(from)).(UpdateBuilder)
+	next := b.clone()
+	next.From = newPart(from)
+	return UpdateBuilder{state: &next}
 }
 
 // FromSelect sets a subquery into the FROM clause of the query.
 func (b UpdateBuilder) FromSelect(from SelectBuilder, alias string) UpdateBuilder {
-	return builder.Set(b, "From", Alias(from, alias)).(UpdateBuilder)
+	next := b.clone()
+	next.From = Alias(from, alias)
+	return UpdateBuilder{state: &next}
 }
 
 // Where adds WHERE expressions to the query.
 //
 // See SelectBuilder.Where for more information.
 func (b UpdateBuilder) Where(pred any, args ...any) UpdateBuilder {
-	return builder.Append(b, "WhereParts", newWherePart(pred, args...)).(UpdateBuilder)
+	next := b.clone()
+	next.WhereParts = appendPersistent(next.WhereParts, newWherePart(pred, args...))
+	return UpdateBuilder{state: &next}
 }
 
 // OrderBy adds ORDER BY expressions to the query.
 func (b UpdateBuilder) OrderBy(orderBys ...string) UpdateBuilder {
-	return builder.Extend(b, "OrderBys", orderBys).(UpdateBuilder)
+	next := b.clone()
+	next.OrderBys = appendPersistent(next.OrderBys, orderBys...)
+	return UpdateBuilder{state: &next}
 }
 
 // Limit sets a LIMIT clause on the query.
 func (b UpdateBuilder) Limit(limit uint64) UpdateBuilder {
-	return builder.Set(b, "Limit", strconv.FormatUint(limit, 10)).(UpdateBuilder)
+	next := b.clone()
+	next.Limit = strconv.FormatUint(limit, 10)
+	return UpdateBuilder{state: &next}
 }
 
 // Offset sets a OFFSET clause on the query.
 func (b UpdateBuilder) Offset(offset uint64) UpdateBuilder {
-	return builder.Set(b, "Offset", strconv.FormatUint(offset, 10)).(UpdateBuilder)
+	next := b.clone()
+	next.Offset = strconv.FormatUint(offset, 10)
+	return UpdateBuilder{state: &next}
 }
 
 // Suffix adds an expression to the end of the query.
@@ -283,11 +335,13 @@ func (b UpdateBuilder) Suffix(sql string, args ...any) UpdateBuilder {
 
 // toSqlRaw builds SQL with raw placeholders ("?") without applying PlaceholderFormat.
 func (b UpdateBuilder) toSqlRaw() (sql string, args []any, err error) {
-	data := builder.GetStruct(b).(updateData)
+	data := b.data()
 	return data.toSqlRaw()
 }
 
 // SuffixExpr adds an expression to the end of the query.
 func (b UpdateBuilder) SuffixExpr(e Sqlizer) UpdateBuilder {
-	return builder.Append(b, "Suffixes", e).(UpdateBuilder)
+	next := b.clone()
+	next.Suffixes = appendPersistent(next.Suffixes, e)
+	return UpdateBuilder{state: &next}
 }

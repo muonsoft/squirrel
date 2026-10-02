@@ -19,8 +19,8 @@ placeholder numbering reliable across nested builders, retaining useful CTE and
 
 - Go 1.25 or newer is the v0.1.0 release target. Release validation is required on
   Go 1.25 and Go 1.26.
-- The root module depends only on `github.com/lann/builder` and its small
-  `github.com/lann/ps` transitive dependency.
+- The root module has no external dependencies. Builders use private typed immutable
+  state; see [migration notes](MIGRATION.md#typed-builder-representation) for representation changes.
 - PostgreSQL execution dependencies live in the separate `integration` module and do
   not enter consumers' dependency graphs.
 

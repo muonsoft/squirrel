@@ -1,6 +1,9 @@
 # Typed builder replacement evaluation
 
-Status: post-v0.1.0 design candidate. This document does not change the v0.1.0
+Status: post-v0.1.0 implementation candidate on `typed-builder-evaluation`.
+The published v0.1.0 commit is `b5bb755e0097874fe2b0602b9c77b66b5412924e`.
+Implementation evidence is in `docs/audits/typed-builder-report.md`; merging remains
+a maintainer decision. The exploratory measurements below are historical. This document does not change the v0.1.0
 decision in `docs/FOUNDATION.md`: that release keeps `github.com/lann/builder` and
 `github.com/lann/ps`. Any replacement must run as a separate tracked stream after
 v0.1.0 release validation and tagging.

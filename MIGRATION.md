@@ -145,3 +145,27 @@ identifiers to `From`, `Column`, `Columns`, `OrderBy`, `GroupBy`, `Join`, `Prefi
 The complete exported-symbol comparison and rationale for each difference are in
 [`docs/API_COMPATIBILITY.md`](docs/API_COMPATIBILITY.md). Provenance and the upstream
 update policy are in [`UPSTREAM.md`](UPSTREAM.md).
+
+## Typed builder representation
+
+The post-v0.1.0 implementation preserves public builder method signatures but
+replaces the underlying `lann/builder.Builder` with private typed state. Do not
+convert between concrete builder types, convert to/from `lann/builder.Builder`, or
+use `builder.Set`/`GetStruct` to inspect or alter Squirrel values. Use the public
+constructors and fluent methods instead. These representation-dependent source
+patterns are breaking changes even though they were not documented APIs.
+
+Builder values remain comparable and usable as map keys. Equality identifies the
+shared internal state, not equivalent SQL: independently built equivalent queries
+need not compare equal. No-op mutations may have different equality results than
+v0.1.0. Zero-value rendering behavior, including missing-format panics for otherwise
+valid zero-value statements, is preserved; prefer constructors for normal use.
+
+Branching and concurrent rendering do not mutate builder-owned state. Bound values,
+custom Sqlizers, and nested caller-owned slices are not deep-copied; callers must
+still synchronize their own mutations. INSERT Values retains its input row slice,
+while Columns captures the supplied column names.
+
+StatementBuilder WHERE defaults apply to SELECT, UPDATE, and DELETE. INSERT and CTE
+seeds ignore them; v0.1.0 could panic while reflecting this unsupported field.
+Placeholder defaults continue to apply to all statement builders.

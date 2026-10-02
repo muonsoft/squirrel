@@ -41,7 +41,9 @@ correctness problem; document every intentional difference.
 
 ## Dependencies and Go
 
-- Keep `github.com/lann/builder` and its `github.com/lann/ps` transitive dependency.
+- v0.1.0 keeps `github.com/lann/builder` and its `github.com/lann/ps` transitive dependency.
+- The separate post-v0.1.0 typed-builder candidate has no root runtime dependencies;
+  adoption requires review of its benchmark and compatibility evidence.
 - Root `go.mod` must contain no pgx, scany, testdock, Docker ecosystem, testify, or
   `golang.org/x/exp` dependency at v0.1.0.
 - Put pgx and PostgreSQL execution tests in a nested `integration` module.

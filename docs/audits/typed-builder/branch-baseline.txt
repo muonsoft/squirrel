@@ -1,0 +1,46 @@
+goos: linux
+goarch: amd64
+pkg: github.com/muonsoft/squirrel
+cpu: AMD EPYC-Rome Processor
+BenchmarkBuilders/Update/Branch-4  	  116688	      2062 ns/op	     488 B/op	      10 allocs/op
+BenchmarkBuilders/Update/Branch-4  	  109825	      2269 ns/op	     488 B/op	      10 allocs/op
+BenchmarkBuilders/Update/Branch-4  	   72159	      2783 ns/op	     488 B/op	      10 allocs/op
+BenchmarkBuilders/Update/Branch-4  	  123850	      2822 ns/op	     488 B/op	      10 allocs/op
+BenchmarkBuilders/Update/Branch-4  	   95050	      2518 ns/op	     488 B/op	      10 allocs/op
+BenchmarkBuilders/Delete/Branch-4  	  123645	      1884 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Delete/Branch-4  	  136664	      1935 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Delete/Branch-4  	  121706	      1849 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Delete/Branch-4  	  140811	      1779 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Delete/Branch-4  	  136892	      2008 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Case/Branch-4    	  150309	      1574 ns/op	     360 B/op	      10 allocs/op
+BenchmarkBuilders/Case/Branch-4    	  127329	      2104 ns/op	     360 B/op	      10 allocs/op
+BenchmarkBuilders/Case/Branch-4    	  115094	      2040 ns/op	     360 B/op	      10 allocs/op
+BenchmarkBuilders/Case/Branch-4    	  133975	      1703 ns/op	     360 B/op	      10 allocs/op
+BenchmarkBuilders/Case/Branch-4    	  148392	      1844 ns/op	     360 B/op	      10 allocs/op
+BenchmarkBuilders/CTE/Branch-4     	   28642	      8113 ns/op	    1312 B/op	      31 allocs/op
+BenchmarkBuilders/CTE/Branch-4     	   35862	      8605 ns/op	    1312 B/op	      31 allocs/op
+BenchmarkBuilders/CTE/Branch-4     	   32713	      7563 ns/op	    1312 B/op	      31 allocs/op
+BenchmarkBuilders/CTE/Branch-4     	   30500	      9208 ns/op	    1312 B/op	      31 allocs/op
+BenchmarkBuilders/CTE/Branch-4     	   30084	      8289 ns/op	    1312 B/op	      31 allocs/op
+BenchmarkBuilders/Statement/Branch-4         	  136158	      1743 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Statement/Branch-4         	  136442	      1580 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Statement/Branch-4         	  132186	      1839 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Statement/Branch-4         	  131139	      1820 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Statement/Branch-4         	  150424	      1675 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Nested/Branch-4            	  120068	      1929 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Nested/Branch-4            	  153969	      1766 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Nested/Branch-4            	  148411	      1597 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Nested/Branch-4            	  164857	      1645 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Nested/Branch-4            	  145567	      1788 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Select/Branch-4            	   85312	      2546 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Select/Branch-4            	  144180	      2202 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Select/Branch-4            	  129648	      1941 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Select/Branch-4            	  133728	      1830 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Select/Branch-4            	  129217	      1968 ns/op	     408 B/op	      10 allocs/op
+BenchmarkBuilders/Insert/Branch-4            	  133293	      1956 ns/op	     512 B/op	      11 allocs/op
+BenchmarkBuilders/Insert/Branch-4            	  133171	      1963 ns/op	     512 B/op	      11 allocs/op
+BenchmarkBuilders/Insert/Branch-4            	  142422	      1587 ns/op	     512 B/op	      11 allocs/op
+BenchmarkBuilders/Insert/Branch-4            	  143356	      1621 ns/op	     512 B/op	      11 allocs/op
+BenchmarkBuilders/Insert/Branch-4            	  132604	      1811 ns/op	     512 B/op	      11 allocs/op
+PASS
+ok  	github.com/muonsoft/squirrel	10.157s

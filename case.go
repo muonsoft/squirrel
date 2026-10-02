@@ -3,13 +3,7 @@ package squirrel
 import (
 	"bytes"
 	"errors"
-
-	"github.com/lann/builder"
 )
-
-func init() { //nolint:gochecknoinits // required to register CaseBuilder
-	builder.Register(CaseBuilder{}, caseData{})
-}
 
 // sqlizerBuffer is a helper that allows to write many Sqlizers one by one
 // without constant checks for errors that may come from Sqlizer.
@@ -94,11 +88,35 @@ func (d *caseData) ToSql() (sqlStr string, args []any, err error) {
 }
 
 // CaseBuilder builds SQL CASE construct which could be used as parts of queries.
-type CaseBuilder builder.Builder
+type CaseBuilder struct {
+	state *caseDataState
+}
+
+type caseDataState struct {
+	What      Sqlizer
+	WhenParts immutableList[whenPart]
+	Else      Sqlizer
+}
+
+func (b CaseBuilder) clone() caseDataState {
+	if b.state == nil {
+		return caseDataState{}
+	}
+	return *b.state
+}
+
+func (b CaseBuilder) data() caseData {
+	state := b.clone()
+	return caseData{
+		What:      state.What,
+		WhenParts: state.WhenParts.slice(),
+		Else:      state.Else,
+	}
+}
 
 // ToSql builds the query into a SQL string and bound args.
 func (b CaseBuilder) ToSql() (sql string, args []any, err error) {
-	data := builder.GetStruct(b).(caseData)
+	data := b.data()
 	return data.ToSql()
 }
 
@@ -114,17 +132,23 @@ func (b CaseBuilder) MustSql() (sql string, args []any) {
 
 // what sets optional value for CASE construct "CASE [value] ...".
 func (b CaseBuilder) what(e any) CaseBuilder {
-	return builder.Set(b, "What", newPart(e)).(CaseBuilder)
+	next := b.clone()
+	next.What = newPart(e)
+	return CaseBuilder{state: &next}
 }
 
 // When adds "WHEN ... THEN ..." part to CASE construct.
 func (b CaseBuilder) When(when, then any) CaseBuilder {
 	// TODO: performance hint: replace slice of WhenPart with just slice of parts
 	// where even indices of the slice belong to "when"s and odd indices belong to "then"s
-	return builder.Append(b, "WhenParts", newWhenPart(when, then)).(CaseBuilder)
+	next := b.clone()
+	next.WhenParts = appendPersistent(next.WhenParts, newWhenPart(when, then))
+	return CaseBuilder{state: &next}
 }
 
 // Else sets optional "ELSE ..." part for CASE construct.
 func (b CaseBuilder) Else(e any) CaseBuilder {
-	return builder.Set(b, "Else", newPart(e)).(CaseBuilder)
+	next := b.clone()
+	next.Else = newPart(e)
+	return CaseBuilder{state: &next}
 }

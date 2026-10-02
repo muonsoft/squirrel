@@ -3,8 +3,6 @@ package squirrel
 import (
 	"bytes"
 	"errors"
-
-	"github.com/lann/builder"
 )
 
 // Common Table Expressions helper
@@ -67,10 +65,34 @@ func (d *commonTableExpressionsData) ToSql() (sql string, args []any, err error)
 // Builder
 
 // CommonTableExpressionsBuilder builds CTE (Common Table Expressions) SQL statements.
-type CommonTableExpressionsBuilder builder.Builder
+type CommonTableExpressionsBuilder struct {
+	state *commonTableExpressionsDataState
+}
 
-func init() { //nolint:gochecknoinits // required to register CommonTableExpressionsBuilder
-	builder.Register(CommonTableExpressionsBuilder{}, commonTableExpressionsData{})
+type commonTableExpressionsDataState struct {
+	PlaceholderFormat PlaceholderFormat
+	Recursive         bool
+	CurrentCteName    string
+	Ctes              immutableList[Sqlizer]
+	Statement         Sqlizer
+}
+
+func (b CommonTableExpressionsBuilder) clone() commonTableExpressionsDataState {
+	if b.state == nil {
+		return commonTableExpressionsDataState{}
+	}
+	return *b.state
+}
+
+func (b CommonTableExpressionsBuilder) data() commonTableExpressionsData {
+	state := b.clone()
+	return commonTableExpressionsData{
+		PlaceholderFormat: state.PlaceholderFormat,
+		Recursive:         state.Recursive,
+		CurrentCteName:    state.CurrentCteName,
+		Ctes:              state.Ctes.slice(),
+		Statement:         state.Statement,
+	}
 }
 
 // Format methods
@@ -78,14 +100,16 @@ func init() { //nolint:gochecknoinits // required to register CommonTableExpress
 // PlaceholderFormat sets PlaceholderFormat (e.g. Question or Dollar) for the
 // query.
 func (b CommonTableExpressionsBuilder) PlaceholderFormat(f PlaceholderFormat) CommonTableExpressionsBuilder {
-	return builder.Set(b, "PlaceholderFormat", f).(CommonTableExpressionsBuilder)
+	next := b.clone()
+	next.PlaceholderFormat = f
+	return CommonTableExpressionsBuilder{state: &next}
 }
 
 // SQL methods
 
 // ToSql builds the query into a SQL string and bound args.
 func (b CommonTableExpressionsBuilder) ToSql() (sql string, args []any, err error) {
-	data := builder.GetStruct(b).(commonTableExpressionsData)
+	data := b.data()
 	return data.ToSql()
 }
 
@@ -100,28 +124,37 @@ func (b CommonTableExpressionsBuilder) MustSql() (sql string, args []any) {
 }
 
 func (b CommonTableExpressionsBuilder) Recursive(recursive bool) CommonTableExpressionsBuilder {
-	return builder.Set(b, "Recursive", recursive).(CommonTableExpressionsBuilder)
+	next := b.clone()
+	next.Recursive = recursive
+	return CommonTableExpressionsBuilder{state: &next}
 }
 
 // Cte starts a new cte.
 func (b CommonTableExpressionsBuilder) Cte(cte string) CommonTableExpressionsBuilder {
-	return builder.Set(b, "CurrentCteName", cte).(CommonTableExpressionsBuilder)
+	next := b.clone()
+	next.CurrentCteName = cte
+	return CommonTableExpressionsBuilder{state: &next}
 }
 
 // As sets the SQL expression for the CTE.
 func (b CommonTableExpressionsBuilder) As(as Sqlizer) CommonTableExpressionsBuilder {
-	data := builder.GetStruct(b).(commonTableExpressionsData)
-	return builder.Append(b, "Ctes", cteExpr{as, data.CurrentCteName}).(CommonTableExpressionsBuilder)
+	next := b.clone()
+	next.Ctes = appendPersistent[Sqlizer](next.Ctes, cteExpr{as, next.CurrentCteName})
+	return CommonTableExpressionsBuilder{state: &next}
 }
 
 // Select finalizes the CommonTableExpressionsBuilder with a SELECT.
 func (b CommonTableExpressionsBuilder) Select(statement SelectBuilder) CommonTableExpressionsBuilder {
-	return builder.Set(b, "Statement", statement).(CommonTableExpressionsBuilder)
+	next := b.clone()
+	next.Statement = statement
+	return CommonTableExpressionsBuilder{state: &next}
 }
 
 // Insert finalizes the CommonTableExpressionsBuilder with an INSERT.
 func (b CommonTableExpressionsBuilder) Insert(statement InsertBuilder) CommonTableExpressionsBuilder {
-	return builder.Set(b, "Statement", statement).(CommonTableExpressionsBuilder)
+	next := b.clone()
+	next.Statement = statement
+	return CommonTableExpressionsBuilder{state: &next}
 }
 
 // Replace finalizes the CommonTableExpressionsBuilder with a REPLACE.
@@ -131,10 +164,14 @@ func (b CommonTableExpressionsBuilder) Replace(statement InsertBuilder) CommonTa
 
 // Update finalizes the CommonTableExpressionsBuilder with an UPDATE.
 func (b CommonTableExpressionsBuilder) Update(statement UpdateBuilder) CommonTableExpressionsBuilder {
-	return builder.Set(b, "Statement", statement).(CommonTableExpressionsBuilder)
+	next := b.clone()
+	next.Statement = statement
+	return CommonTableExpressionsBuilder{state: &next}
 }
 
 // Delete finalizes the CommonTableExpressionsBuilder with a DELETE.
 func (b CommonTableExpressionsBuilder) Delete(statement DeleteBuilder) CommonTableExpressionsBuilder {
-	return builder.Set(b, "Statement", statement).(CommonTableExpressionsBuilder)
+	next := b.clone()
+	next.Statement = statement
+	return CommonTableExpressionsBuilder{state: &next}
 }

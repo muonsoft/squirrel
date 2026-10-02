@@ -5,8 +5,6 @@ import (
 	"errors"
 	"strconv"
 	"strings"
-
-	"github.com/lann/builder"
 )
 
 type deleteData struct {
@@ -86,10 +84,40 @@ func (d *deleteData) ToSql() (sqlStr string, args []any, err error) {
 // Builder
 
 // DeleteBuilder builds SQL DELETE statements.
-type DeleteBuilder builder.Builder
+type DeleteBuilder struct {
+	state *deleteDataState
+}
 
-func init() { //nolint:gochecknoinits // required to register DeleteBuilder
-	builder.Register(DeleteBuilder{}, deleteData{})
+type deleteDataState struct {
+	PlaceholderFormat PlaceholderFormat
+	Prefixes          immutableList[Sqlizer]
+	From              string
+	WhereParts        immutableList[Sqlizer]
+	OrderBys          immutableList[string]
+	Limit             string
+	Offset            string
+	Suffixes          immutableList[Sqlizer]
+}
+
+func (b DeleteBuilder) clone() deleteDataState {
+	if b.state == nil {
+		return deleteDataState{}
+	}
+	return *b.state
+}
+
+func (b DeleteBuilder) data() deleteData {
+	state := b.clone()
+	return deleteData{
+		PlaceholderFormat: state.PlaceholderFormat,
+		Prefixes:          state.Prefixes.slice(),
+		From:              state.From,
+		WhereParts:        state.WhereParts.slice(),
+		OrderBys:          state.OrderBys.slice(),
+		Limit:             state.Limit,
+		Offset:            state.Offset,
+		Suffixes:          state.Suffixes.slice(),
+	}
 }
 
 // Format methods
@@ -97,14 +125,16 @@ func init() { //nolint:gochecknoinits // required to register DeleteBuilder
 // PlaceholderFormat sets PlaceholderFormat (e.g. Question or Dollar) for the
 // query.
 func (b DeleteBuilder) PlaceholderFormat(f PlaceholderFormat) DeleteBuilder {
-	return builder.Set(b, "PlaceholderFormat", f).(DeleteBuilder)
+	next := b.clone()
+	next.PlaceholderFormat = f
+	return DeleteBuilder{state: &next}
 }
 
 // SQL methods
 
 // ToSql builds the query into a SQL string and bound args.
 func (b DeleteBuilder) ToSql() (sql string, args []any, err error) {
-	data := builder.GetStruct(b).(deleteData)
+	data := b.data()
 	return data.ToSql()
 }
 
@@ -125,39 +155,51 @@ func (b DeleteBuilder) Prefix(sql string, args ...any) DeleteBuilder {
 
 // PrefixExpr adds an expression to the very beginning of the query.
 func (b DeleteBuilder) PrefixExpr(e Sqlizer) DeleteBuilder {
-	return builder.Append(b, "Prefixes", e).(DeleteBuilder)
+	next := b.clone()
+	next.Prefixes = appendPersistent(next.Prefixes, e)
+	return DeleteBuilder{state: &next}
 }
 
 // From sets the table to be deleted from.
 func (b DeleteBuilder) From(from string) DeleteBuilder {
-	return builder.Set(b, "From", from).(DeleteBuilder)
+	next := b.clone()
+	next.From = from
+	return DeleteBuilder{state: &next}
 }
 
 // Where adds WHERE expressions to the query.
 //
 // See SelectBuilder.Where for more information.
 func (b DeleteBuilder) Where(pred any, args ...any) DeleteBuilder {
-	return builder.Append(b, "WhereParts", newWherePart(pred, args...)).(DeleteBuilder)
+	next := b.clone()
+	next.WhereParts = appendPersistent(next.WhereParts, newWherePart(pred, args...))
+	return DeleteBuilder{state: &next}
 }
 
 // OrderBy adds ORDER BY expressions to the query.
 func (b DeleteBuilder) OrderBy(orderBys ...string) DeleteBuilder {
-	return builder.Extend(b, "OrderBys", orderBys).(DeleteBuilder)
+	next := b.clone()
+	next.OrderBys = appendPersistent(next.OrderBys, orderBys...)
+	return DeleteBuilder{state: &next}
 }
 
 // Limit sets a LIMIT clause on the query.
 func (b DeleteBuilder) Limit(limit uint64) DeleteBuilder {
-	return builder.Set(b, "Limit", strconv.FormatUint(limit, 10)).(DeleteBuilder)
+	next := b.clone()
+	next.Limit = strconv.FormatUint(limit, 10)
+	return DeleteBuilder{state: &next}
 }
 
 // Offset sets a OFFSET clause on the query.
 func (b DeleteBuilder) Offset(offset uint64) DeleteBuilder {
-	return builder.Set(b, "Offset", strconv.FormatUint(offset, 10)).(DeleteBuilder)
+	next := b.clone()
+	next.Offset = strconv.FormatUint(offset, 10)
+	return DeleteBuilder{state: &next}
 }
 
 // toSqlRaw builds SQL with raw placeholders ("?") without applying PlaceholderFormat.
 func (b DeleteBuilder) toSqlRaw() (sql string, args []any, err error) {
-	data := builder.GetStruct(b).(deleteData)
+	data := b.data()
 	return data.toSqlRaw()
 }
 
@@ -168,5 +210,7 @@ func (b DeleteBuilder) Suffix(sql string, args ...any) DeleteBuilder {
 
 // SuffixExpr adds an expression to the end of the query.
 func (b DeleteBuilder) SuffixExpr(e Sqlizer) DeleteBuilder {
-	return builder.Append(b, "Suffixes", e).(DeleteBuilder)
+	next := b.clone()
+	next.Suffixes = appendPersistent(next.Suffixes, e)
+	return DeleteBuilder{state: &next}
 }

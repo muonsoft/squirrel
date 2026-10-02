@@ -16,6 +16,14 @@ Regenerate the fork inventory:
 go run ./tools/api-surface . > docs/audits/baseline/muonsoft-fork-api.txt
 ```
 
+## Post-v0.1.0 typed-state candidate
+
+All public method signatures are unchanged. The inventory now records private
+state structs instead of `builder.Builder` underlying types. Representation-based
+conversions and `lann/builder` introspection are no longer supported. Builder values
+remain comparable, with state-identity equality. See `MIGRATION.md` for details,
+including the corrected handling of WHERE defaults on INSERT/CTE seeds.
+
 ## Compatibility policy
 
 Priority order (from `docs/FOUNDATION.md`):
