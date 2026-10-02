@@ -1,107 +1,14 @@
 name: CI
 
-permissions:
-  contents: read
-
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   verify:
-    runs-on: ubuntu-24.04
-    env:
-      GOTOOLCHAIN: local
-    strategy:
-      fail-fast: false
-      matrix:
-        go-version: ["1.25", "1.26"]
-
-    services:
-      postgres:
-        image: postgres:18.1
-        env:
-          POSTGRES_USER: squirrel
-          POSTGRES_PASSWORD: squirrel
-          POSTGRES_DB: squirrel_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U squirrel -d squirrel_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
-        with:
-          go-version: ${{ matrix.go-version }}
-          cache: true
-
-      - name: Format check
-        run: |
-          unformatted=$(gofmt -l .)
-          if [ -n "$unformatted" ]; then
-            echo "gofmt needed for:"
-            echo "$unformatted"
-            exit 1
-          fi
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.13.2
-
-      - name: Unit tests
-        run: go test ./...
-
-      - name: Race tests
-        run: go test -race ./...
-
-      - name: Fuzz smoke
-        run: go test -run '^$' -fuzz '^FuzzPlaceholderComposition$' -fuzztime=10s .
-
-      - name: Root dependency policy
-        run: bash scripts/check-root-deps.sh
-
-      - name: Root module tidy check
-        run: |
-          go mod tidy
-          git diff --exit-code go.mod go.sum
-
-      - name: Module verify
-        run: go mod verify
-
-      - name: Compatibility module
-        run: |
-          cd compatibility
-          go mod tidy
-          git diff --exit-code go.mod go.sum
-          go test ./...
-
-      - name: Builder differential comparison
-        run: |
-          bash scripts/compare-builders.sh
-          (cd evaluation && go mod tidy -diff)
-
-      - name: Integration module tidy check
-        run: |
-          cd integration
-          go mod tidy
-          git diff --exit-code go.mod go.sum
-
-      - name: Integration tests
-        env:
-          POSTGRES_TEST_DSN: postgres://squirrel:squirrel@localhost:5432/squirrel_test?sslmode=disable
-        run: cd integration && go test ./...
+    uses: ./.github/workflows/verify.yml
