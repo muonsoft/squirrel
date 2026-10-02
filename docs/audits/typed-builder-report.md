@@ -125,16 +125,20 @@ Additional branch samples (same host/toolchain, five 200 ms runs):
 - Root `go list -m all`: only `github.com/muonsoft/squirrel`; dependency policy now
   requires exactly that graph rather than merely rejecting known heavy dependencies.
 - API inventory: only underlying representations changed; method signatures match.
-- PostgreSQL used locally: 14.24, isolated in `/tmp`, with a nonempty DSN; integration
-  tests were executed, not skipped. Docker pulled the configured 18.1 image but its
-  runtime failed to start the container (`failed to create TTRPC connection`). Thus
-  this run does not certify PostgreSQL 18.1; CI still uses 18.1 and must pass before
-  adoption. No database dependencies entered the root module.
+- Initial PostgreSQL validation used 14.24, isolated in `/tmp`, with a nonempty
+  DSN; tests executed rather than skipped. The initial Docker 18.1 attempt failed
+  because the running containerd was 2.2.3 while the installed shim was 2.3.5.
+- After the maintainer-authorized Docker restart, containerd and shim both use
+  2.3.5. The full `scripts/test-all.sh` passed on Go 1.26.2 with the configured
+  PostgreSQL 18.1 Compose container: lint zero issues, unit/race, fuzz (31,485
+  executions), differential comparison, dependency/API/tidy checks, and actual
+  integration execution (`ok`, 0.345s). The temporary Compose stack was removed
+  by the script. No database dependencies entered the root module.
 - Shell syntax and `git diff --check`: PASS.
 
 ## Adoption decision still outstanding
 
 Review representation-dependent source incompatibilities, the seed-default
-correction, raw benchmark evidence, and the CI PostgreSQL 18.1 result before
-merging. Timing evidence comes from a shared host; repeat measurements on a stable
+correction, raw benchmark evidence, and normal CI results before merging.
+Local PostgreSQL 18.1 validation is now complete. Timing evidence comes from a shared host; repeat measurements on a stable
 runner if a precise speedup is needed. No release version has been selected here.
