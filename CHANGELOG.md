@@ -7,6 +7,21 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Replace reflection-based `lann/builder` state with private typed immutable state
+  and persistent lists; the root module now has no external dependencies.
+- Preserve builder method signatures and SQL composition. Conversions to/from
+  `lann/builder.Builder` and between concrete builder types are no longer supported;
+  equality reflects state identity rather than the former persistent-map identity.
+- Statement seed WHERE clauses apply only to SELECT, UPDATE, and DELETE. Creating
+  an INSERT or CTE from such a seed no longer panics on an unknown reflected field.
+
+### Added
+
+- Reproducible construction/rendering/branching benchmarks, a differential harness
+  against published v0.1.0, and concurrent branch/render regression coverage.
+
 ## [0.1.0] - 2026-09-24
 
 First maintained release of `github.com/muonsoft/squirrel`, based on n-r-w/squirrel

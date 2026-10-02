@@ -37,6 +37,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v7
@@ -87,6 +89,11 @@ jobs:
           go mod tidy
           git diff --exit-code go.mod go.sum
           go test ./...
+
+      - name: Builder differential comparison
+        run: |
+          bash scripts/compare-builders.sh
+          (cd evaluation && go mod tidy -diff)
 
       - name: Integration module tidy check
         run: |

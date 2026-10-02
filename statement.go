@@ -1,57 +1,88 @@
 package squirrel
 
-import "github.com/lann/builder"
-
 // StatementBuilderType is the type of StatementBuilder.
-type StatementBuilderType builder.Builder
+type StatementBuilderType struct {
+	state *statementDataState
+}
+
+type statementDataState struct {
+	PlaceholderFormat PlaceholderFormat
+	WhereParts        immutableList[Sqlizer]
+}
+
+func (b StatementBuilderType) clone() statementDataState {
+	if b.state == nil {
+		return statementDataState{}
+	}
+	return *b.state
+}
 
 // Select returns a SelectBuilder for this StatementBuilderType.
 func (b StatementBuilderType) Select(columns ...string) SelectBuilder {
-	return SelectBuilder(b).Columns(columns...)
+	next := selectDataState{}
+	next.PlaceholderFormat = b.clone().PlaceholderFormat
+	next.WhereParts = b.clone().WhereParts
+	return SelectBuilder{state: &next}.Columns(columns...)
 }
 
 // Insert returns a InsertBuilder for this StatementBuilderType.
 func (b StatementBuilderType) Insert(into string) InsertBuilder {
-	return InsertBuilder(b).Into(into)
+	next := insertDataState{}
+	next.PlaceholderFormat = b.clone().PlaceholderFormat
+	return InsertBuilder{state: &next}.Into(into)
 }
 
 // Replace returns a InsertBuilder for this StatementBuilderType with the
 // statement keyword set to "REPLACE".
 func (b StatementBuilderType) Replace(into string) InsertBuilder {
-	return InsertBuilder(b).statementKeyword("REPLACE").Into(into)
+	next := insertDataState{}
+	next.PlaceholderFormat = b.clone().PlaceholderFormat
+	return InsertBuilder{state: &next}.statementKeyword("REPLACE").Into(into)
 }
 
 // Update returns a UpdateBuilder for this StatementBuilderType.
 func (b StatementBuilderType) Update(table string) UpdateBuilder {
-	return UpdateBuilder(b).Table(table)
+	next := updateDataState{}
+	next.PlaceholderFormat = b.clone().PlaceholderFormat
+	next.WhereParts = b.clone().WhereParts
+	return UpdateBuilder{state: &next}.Table(table)
 }
 
 // Delete returns a DeleteBuilder for this StatementBuilderType.
 func (b StatementBuilderType) Delete(from string) DeleteBuilder {
-	return DeleteBuilder(b).From(from)
+	next := deleteDataState{}
+	next.PlaceholderFormat = b.clone().PlaceholderFormat
+	next.WhereParts = b.clone().WhereParts
+	return DeleteBuilder{state: &next}.From(from)
 }
 
 // With returns a CommonTableExpressionsBuilder for this StatementBuilderType.
 func (b StatementBuilderType) With(cte string) CommonTableExpressionsBuilder {
-	return CommonTableExpressionsBuilder(b).Cte(cte)
+	next := commonTableExpressionsDataState{}
+	next.PlaceholderFormat = b.clone().PlaceholderFormat
+	return CommonTableExpressionsBuilder{state: &next}.Cte(cte)
 }
 
 // PlaceholderFormat sets the PlaceholderFormat field for any child builders.
 func (b StatementBuilderType) PlaceholderFormat(f PlaceholderFormat) StatementBuilderType {
-	return builder.Set(b, "PlaceholderFormat", f).(StatementBuilderType)
+	next := b.clone()
+	next.PlaceholderFormat = f
+	return StatementBuilderType{state: &next}
 }
 
 // Where adds WHERE expressions to the query.
 //
 // See SelectBuilder.Where for more information.
 func (b StatementBuilderType) Where(pred any, args ...any) StatementBuilderType {
-	return builder.Append(b, "WhereParts", newWherePart(pred, args...)).(StatementBuilderType)
+	next := b.clone()
+	next.WhereParts = appendPersistent(next.WhereParts, newWherePart(pred, args...))
+	return StatementBuilderType{state: &next}
 }
 
 // StatementBuilder is a parent builder for other builders, e.g. SelectBuilder.
 //
 //nolint:gochecknoglobals // common starting point for building statements
-var StatementBuilder = StatementBuilderType(builder.EmptyBuilder).PlaceholderFormat(Question)
+var StatementBuilder = StatementBuilderType{}.PlaceholderFormat(Question)
 
 // Select returns a new SelectBuilder, optionally setting some result columns.
 //
@@ -106,7 +137,7 @@ func WithRecursive(cte string) CommonTableExpressionsBuilder {
 // Case returns a new CaseBuilder.
 // "what" represents case value.
 func Case(what ...any) CaseBuilder {
-	b := CaseBuilder(builder.EmptyBuilder)
+	b := CaseBuilder{}
 
 	switch len(what) {
 	case 0:

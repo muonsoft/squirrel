@@ -137,14 +137,22 @@ method (UpdateBuilder) Table func(table string) UpdateBuilder
 method (UpdateBuilder) ToSql func() (sql string, args []any, err error)
 method (UpdateBuilder) Where func(pred any, args ...any) UpdateBuilder
 type And conj
-type CaseBuilder builder.Builder
-type CommonTableExpressionsBuilder builder.Builder
-type DeleteBuilder builder.Builder
+type CaseBuilder struct {
+	state *caseDataState
+}
+type CommonTableExpressionsBuilder struct {
+	state *commonTableExpressionsDataState
+}
+type DeleteBuilder struct {
+	state *deleteDataState
+}
 type Eq map[string]any
 type Gt Lt
 type GtOrEq Lt
 type ILike Like
-type InsertBuilder builder.Builder
+type InsertBuilder struct {
+	state *insertDataState
+}
 type Like map[string]any
 type Lt map[string]any
 type LtOrEq Lt
@@ -155,12 +163,18 @@ type Or conj
 type PlaceholderFormat interface {
 	ReplacePlaceholders(sql string) (string, error)
 }
-type SelectBuilder builder.Builder
+type SelectBuilder struct {
+	state *selectDataState
+}
 type Sqlizer interface {
 	ToSql() (string, []any, error)
 }
-type StatementBuilderType builder.Builder
-type UpdateBuilder builder.Builder
+type StatementBuilderType struct {
+	state *statementDataState
+}
+type UpdateBuilder struct {
+	state *updateDataState
+}
 var AtP 
 var Colon 
 var Dollar 

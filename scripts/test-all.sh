@@ -56,6 +56,10 @@ echo "==> compatibility module"
 (cd compatibility && go test ./...)
 check_tidy compatibility
 
+echo "==> typed builder differential comparison"
+bash scripts/compare-builders.sh
+check_tidy evaluation
+
 echo "==> exported API inventory"
 diff -u docs/audits/baseline/muonsoft-fork-api.txt <(go run ./tools/api-surface .)
 

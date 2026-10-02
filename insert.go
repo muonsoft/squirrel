@@ -7,8 +7,6 @@ import (
 	"io"
 	"sort"
 	"strings"
-
-	"github.com/lann/builder"
 )
 
 type insertData struct {
@@ -145,10 +143,42 @@ func (d *insertData) appendSelectToSQL(w io.Writer, args []any) ([]any, error) {
 // Builder
 
 // InsertBuilder builds SQL INSERT statements.
-type InsertBuilder builder.Builder
+type InsertBuilder struct {
+	state *insertDataState
+}
 
-func init() { //nolint:gochecknoinits // required to register InsertBuilder
-	builder.Register(InsertBuilder{}, insertData{})
+type insertDataState struct {
+	PlaceholderFormat PlaceholderFormat
+	Prefixes          immutableList[Sqlizer]
+	StatementKeyword  string
+	Options           immutableList[string]
+	Into              string
+	Columns           immutableList[string]
+	Values            immutableList[[]any]
+	Suffixes          immutableList[Sqlizer]
+	Select            *SelectBuilder
+}
+
+func (b InsertBuilder) clone() insertDataState {
+	if b.state == nil {
+		return insertDataState{}
+	}
+	return *b.state
+}
+
+func (b InsertBuilder) data() insertData {
+	state := b.clone()
+	return insertData{
+		PlaceholderFormat: state.PlaceholderFormat,
+		Prefixes:          state.Prefixes.slice(),
+		StatementKeyword:  state.StatementKeyword,
+		Options:           state.Options.slice(),
+		Into:              state.Into,
+		Columns:           state.Columns.slice(),
+		Values:            state.Values.slice(),
+		Suffixes:          state.Suffixes.slice(),
+		Select:            state.Select,
+	}
 }
 
 // Format methods
@@ -156,14 +186,16 @@ func init() { //nolint:gochecknoinits // required to register InsertBuilder
 // PlaceholderFormat sets PlaceholderFormat (e.g. Question or Dollar) for the
 // query.
 func (b InsertBuilder) PlaceholderFormat(f PlaceholderFormat) InsertBuilder {
-	return builder.Set(b, "PlaceholderFormat", f).(InsertBuilder)
+	next := b.clone()
+	next.PlaceholderFormat = f
+	return InsertBuilder{state: &next}
 }
 
 // SQL methods
 
 // ToSql builds the query into a SQL string and bound args.
 func (b InsertBuilder) ToSql() (sql string, args []any, err error) {
-	data := builder.GetStruct(b).(insertData)
+	data := b.data()
 	return data.ToSql()
 }
 
@@ -184,27 +216,37 @@ func (b InsertBuilder) Prefix(sql string, args ...any) InsertBuilder {
 
 // PrefixExpr adds an expression to the very beginning of the query.
 func (b InsertBuilder) PrefixExpr(e Sqlizer) InsertBuilder {
-	return builder.Append(b, "Prefixes", e).(InsertBuilder)
+	next := b.clone()
+	next.Prefixes = appendPersistent(next.Prefixes, e)
+	return InsertBuilder{state: &next}
 }
 
 // Options adds keyword options before the INTO clause of the query.
 func (b InsertBuilder) Options(options ...string) InsertBuilder {
-	return builder.Extend(b, "Options", options).(InsertBuilder)
+	next := b.clone()
+	next.Options = appendPersistent(next.Options, options...)
+	return InsertBuilder{state: &next}
 }
 
 // Into sets the INTO clause of the query.
 func (b InsertBuilder) Into(from string) InsertBuilder {
-	return builder.Set(b, "Into", from).(InsertBuilder)
+	next := b.clone()
+	next.Into = from
+	return InsertBuilder{state: &next}
 }
 
 // Columns adds insert columns to the query.
 func (b InsertBuilder) Columns(columns ...string) InsertBuilder {
-	return builder.Extend(b, "Columns", columns).(InsertBuilder)
+	next := b.clone()
+	next.Columns = appendPersistent(next.Columns, columns...)
+	return InsertBuilder{state: &next}
 }
 
 // Values adds a single row's values to the query.
 func (b InsertBuilder) Values(values ...any) InsertBuilder {
-	return builder.Append(b, "Values", values).(InsertBuilder)
+	next := b.clone()
+	next.Values = appendPersistent(next.Values, values)
+	return InsertBuilder{state: &next}
 }
 
 // Suffix adds an expression to the end of the query.
@@ -214,7 +256,9 @@ func (b InsertBuilder) Suffix(sql string, args ...any) InsertBuilder {
 
 // SuffixExpr adds an expression to the end of the query.
 func (b InsertBuilder) SuffixExpr(e Sqlizer) InsertBuilder {
-	return builder.Append(b, "Suffixes", e).(InsertBuilder)
+	next := b.clone()
+	next.Suffixes = appendPersistent(next.Suffixes, e)
+	return InsertBuilder{state: &next}
 }
 
 // SetMap set columns and values for insert builder from a map of column name and value.
@@ -233,24 +277,28 @@ func (b InsertBuilder) SetMap(clauses map[string]any) InsertBuilder {
 		vals = append(vals, clauses[col])
 	}
 
-	b = builder.Set(b, "Columns", cols).(InsertBuilder)
-	b = builder.Set(b, "Values", [][]any{vals}).(InsertBuilder)
-
-	return b
+	next := b.clone()
+	next.Columns = appendPersistent(immutableList[string]{}, cols...)
+	next.Values = appendPersistent(immutableList[[]any]{}, vals)
+	return InsertBuilder{state: &next}
 }
 
 // Select set Select clause for insert query.
 // If Values and Select are used, then Select has higher priority.
 func (b InsertBuilder) Select(sb SelectBuilder) InsertBuilder {
-	return builder.Set(b, "Select", &sb).(InsertBuilder)
+	next := b.clone()
+	next.Select = &sb
+	return InsertBuilder{state: &next}
 }
 
 func (b InsertBuilder) statementKeyword(keyword string) InsertBuilder {
-	return builder.Set(b, "StatementKeyword", keyword).(InsertBuilder)
+	next := b.clone()
+	next.StatementKeyword = keyword
+	return InsertBuilder{state: &next}
 }
 
 // toSqlRaw builds SQL with raw placeholders ("?") without applying PlaceholderFormat.
 func (b InsertBuilder) toSqlRaw() (sql string, args []any, err error) {
-	data := builder.GetStruct(b).(insertData)
+	data := b.data()
 	return data.toSqlRaw()
 }

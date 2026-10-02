@@ -1,0 +1,46 @@
+goos: linux
+goarch: amd64
+pkg: github.com/muonsoft/squirrel
+cpu: AMD EPYC-Rome Processor
+BenchmarkBuilders/Nested/Branch-4  	  512108	       419.3 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Nested/Branch-4  	  809886	       455.4 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Nested/Branch-4  	  563140	       470.6 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Nested/Branch-4  	  573566	       408.3 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Nested/Branch-4  	  916516	       399.7 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Select/Branch-4  	  621146	       531.8 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Select/Branch-4  	  944553	       738.9 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Select/Branch-4  	  596642	       880.1 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Select/Branch-4  	  411048	       669.2 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Select/Branch-4  	  726144	       567.4 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Insert/Branch-4  	 1000000	       409.9 ns/op	     208 B/op	       3 allocs/op
+BenchmarkBuilders/Insert/Branch-4  	 1000000	       369.3 ns/op	     208 B/op	       3 allocs/op
+BenchmarkBuilders/Insert/Branch-4  	 1000000	       347.8 ns/op	     208 B/op	       3 allocs/op
+BenchmarkBuilders/Insert/Branch-4  	 1000000	       414.9 ns/op	     208 B/op	       3 allocs/op
+BenchmarkBuilders/Insert/Branch-4  	 1000000	       413.2 ns/op	     208 B/op	       3 allocs/op
+BenchmarkBuilders/Update/Branch-4  	 1000000	       394.8 ns/op	     208 B/op	       2 allocs/op
+BenchmarkBuilders/Update/Branch-4  	 1000000	       384.7 ns/op	     208 B/op	       2 allocs/op
+BenchmarkBuilders/Update/Branch-4  	 1000000	       411.4 ns/op	     208 B/op	       2 allocs/op
+BenchmarkBuilders/Update/Branch-4  	 1000000	       371.6 ns/op	     208 B/op	       2 allocs/op
+BenchmarkBuilders/Update/Branch-4  	 1000000	       363.4 ns/op	     208 B/op	       2 allocs/op
+BenchmarkBuilders/Delete/Branch-4  	  764197	       509.1 ns/op	     216 B/op	       4 allocs/op
+BenchmarkBuilders/Delete/Branch-4  	  904716	       424.9 ns/op	     216 B/op	       4 allocs/op
+BenchmarkBuilders/Delete/Branch-4  	  928694	       640.2 ns/op	     216 B/op	       4 allocs/op
+BenchmarkBuilders/Delete/Branch-4  	 1000000	       648.7 ns/op	     216 B/op	       4 allocs/op
+BenchmarkBuilders/Delete/Branch-4  	  802838	       516.2 ns/op	     216 B/op	       4 allocs/op
+BenchmarkBuilders/Case/Branch-4    	 1000000	       440.9 ns/op	     192 B/op	       4 allocs/op
+BenchmarkBuilders/Case/Branch-4    	 1000000	       339.3 ns/op	     192 B/op	       4 allocs/op
+BenchmarkBuilders/Case/Branch-4    	 1000000	       370.4 ns/op	     192 B/op	       4 allocs/op
+BenchmarkBuilders/Case/Branch-4    	 1000000	       455.4 ns/op	     192 B/op	       4 allocs/op
+BenchmarkBuilders/Case/Branch-4    	 1000000	       548.9 ns/op	     192 B/op	       4 allocs/op
+BenchmarkBuilders/CTE/Branch-4     	  301274	       732.6 ns/op	     432 B/op	       7 allocs/op
+BenchmarkBuilders/CTE/Branch-4     	  227578	       896.3 ns/op	     432 B/op	       7 allocs/op
+BenchmarkBuilders/CTE/Branch-4     	  384057	      1417 ns/op	     432 B/op	       7 allocs/op
+BenchmarkBuilders/CTE/Branch-4     	  260150	       923.1 ns/op	     432 B/op	       7 allocs/op
+BenchmarkBuilders/CTE/Branch-4     	  282142	      1065 ns/op	     432 B/op	       7 allocs/op
+BenchmarkBuilders/Statement/Branch-4         	  496777	       627.5 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Statement/Branch-4         	 1000000	       531.9 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Statement/Branch-4         	  411918	       576.3 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Statement/Branch-4         	  690890	       737.1 ns/op	     296 B/op	       4 allocs/op
+BenchmarkBuilders/Statement/Branch-4         	  557419	       661.4 ns/op	     296 B/op	       4 allocs/op
+PASS
+ok  	github.com/muonsoft/squirrel	15.801s
