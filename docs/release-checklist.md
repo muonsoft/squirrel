@@ -92,15 +92,10 @@ revision. Required checks are the existing quality gate, `Minimum supported Go`
 (build/tests on the `go.mod` minimum), and `Security` (govulncheck v1.8.0, analysis
 Go 1.26.6). Security fails on both reachable findings and scanner/setup errors.
 
-`legacy-security.yml` runs `Legacy Go security report` independently in CI and
-Release. It installs the same pinned scanner with tooling Go, then scans with the
-minimum Go. Findings produce a warning and an explicit diagnostic report; scanner,
-setup or network errors fail the diagnostic job and report an incomplete/error
-result. Neither outcome is a dependency of publication or a required branch check.
-There is no blanket job-level error suppression. Summaries and artifacts distinguish
-clean scans, findings and operational failures and record the effective toolchain.
-A failed diagnostic can make the overall workflow red even though required checks
-and publication succeed; inspect individual checks rather than the overall badge.
+The security check retains a GitHub Summary and an artifact with scanner output
+and the effective toolchain. It distinguishes findings from scanner/setup errors;
+an incomplete scan is never treated as clean. CI and releases do not scan old Go
+versions. A minimum-toolchain security audit can be performed manually when needed.
 
 The minimum Go directive promises build/API compatibility, not a vulnerability-free
 old standard library. Consumers should use a maintained, patched Go toolchain.
@@ -138,8 +133,8 @@ The version input has no prefilled default to avoid reusing a previous release.
 Before merging this CI change, review branch protection required-check names:
 reusable workflow jobs have new check names. Configure rules to require the new
 quality, minimum and Security lanes. Remove the obsolete vulnerability matrix
-contexts only when their replacements are selected; do not require Legacy Go security report; do not disable existing protections
-without their replacements. Confirm the release bot can push its changelog commit.
+contexts only when their replacements are selected. Do not disable existing
+protections without their replacements. Confirm the release bot can push its changelog commit.
 No local validation can establish those hosted repository settings.
 
 Local release regression checks:
