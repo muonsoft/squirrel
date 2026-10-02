@@ -1,0 +1,121 @@
+name: Shared verification
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: local
+
+    services:
+      postgres:
+        image: postgres:18.1
+        env:
+          POSTGRES_USER: squirrel
+          POSTGRES_PASSWORD: squirrel
+          POSTGRES_DB: squirrel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U squirrel -d squirrel_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.26.6"
+          cache: true
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.13.2
+
+      - name: Install project gate tools
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+
+      - name: Full project gate
+        env:
+          POSTGRES_TEST_DSN: postgres://squirrel:squirrel@localhost:5432/squirrel_test?sslmode=disable
+        run: bash scripts/test-all.sh
+
+      - name: Release script contracts
+        run: |
+          for script in scripts/*.sh; do bash -n "$script"; done
+          bash scripts/prepare-release-test.sh
+          python3 scripts/release-candidate-test.py
+
+  minimum:
+    name: Minimum supported Go
+    runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: local
+    services:
+      postgres:
+        image: postgres:18.1
+        env:
+          POSTGRES_USER: squirrel
+          POSTGRES_PASSWORD: squirrel
+          POSTGRES_DB: squirrel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U squirrel -d squirrel_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Install project gate tools
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+      - name: Full project gate on supported minimum
+        env:
+          POSTGRES_TEST_DSN: postgres://squirrel:squirrel@localhost:5432/squirrel_test?sslmode=disable
+        run: |
+          go version
+          bash scripts/test-all.sh
+
+  vulnerability:
+    name: Vulnerabilities (${{ matrix.target }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [minimum, tooling]
+    env:
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.6'
+      - name: Install pinned scanner independently of consumer module
+        run: GOBIN="$RUNNER_TEMP/vuln-bin" go install golang.org/x/vuln/cmd/govulncheck@v1.8.0
+      - uses: actions/setup-go@v7
+        if: matrix.target == 'minimum'
+        with:
+          go-version-file: go.mod
+      - name: Scan with selected analysis toolchain
+        run: |
+          go version
+          "$RUNNER_TEMP/vuln-bin/govulncheck" -version
+          date -u
+          "$RUNNER_TEMP/vuln-bin/govulncheck" ./...
