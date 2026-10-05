@@ -7,6 +7,8 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-05
+
 ### Changed
 
 - Replace reflection-based `lann/builder` state with private typed immutable state
