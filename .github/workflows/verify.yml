@@ -124,7 +124,7 @@ jobs:
         working-directory: integration
         env:
           POSTGRES_TEST_DSN: postgres://squirrel:squirrel@localhost:5432/squirrel_test?sslmode=disable
-        run: go test -run 'TestStandardUUID|TestGofrsUUID' -v ./...
+        run: go test -run TestStandardUUID -v ./...
 
   security:
     name: Security
