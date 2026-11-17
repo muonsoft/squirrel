@@ -94,6 +94,38 @@ jobs:
           go version
           bash scripts/test-all.sh
 
+  uuid:
+    name: Standard UUID (Go 1.27)
+    runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: local
+    services:
+      postgres:
+        image: postgres:18.1
+        env:
+          POSTGRES_USER: squirrel
+          POSTGRES_PASSWORD: squirrel
+          POSTGRES_DB: squirrel_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U squirrel -d squirrel_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.x'
+      - run: go test ./...
+      - name: UUID driver tests
+        working-directory: integration
+        env:
+          POSTGRES_TEST_DSN: postgres://squirrel:squirrel@localhost:5432/squirrel_test?sslmode=disable
+        run: go test -run 'TestStandardUUID|TestGofrsUUID' -v ./...
+
   security:
     name: Security
     runs-on: ubuntu-24.04

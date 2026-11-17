@@ -470,7 +470,7 @@ func getSortedKeys(exp map[string]any) []string {
 }
 
 func isListType(val any) bool {
-	if driver.IsValue(val) {
+	if driver.IsValue(val) || isStandardUUID(val) {
 		return false
 	}
 	valVal := reflect.ValueOf(val)

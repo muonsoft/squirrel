@@ -7,6 +7,13 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Treat Go 1.27 standard-library UUIDs as scalar arguments in equality,
+  comparison and In/NotIn expressions, preserving UUID values for drivers.
+  UUID slices remain lists; ordinary arrays and driver.Valuer behavior are
+  unchanged. The minimum supported Go version remains 1.25.
+
 ## [0.2.0] - 2026-10-05
 
 ### Changed
