@@ -230,3 +230,43 @@ The following n-r-w v1.6.0 exports are intentionally absent:
 - `Search`, `Paginator`, `Paginate*`, `SetIDColumn`, stateful `SelectBuilder.Alias`
 - `OrderCond`, `OrderByCond`, `EqNotEmpty`
 - All database execution and `StmtCache` APIs
+
+
+## Standard-library UUIDs (Go 1.27+)
+
+The minimum Go version remains 1.25. Version-constrained source files import
+`uuid` only on Go 1.27 and newer; older toolchains use a no-op classifier.
+Only the exact `uuid.UUID` type (including aliases) is recognized as a scalar.
+Defined wrapper types, ordinary `[16]byte`, Stringer and TextMarshaler arrays
+retain their existing list semantics.
+
+`Eq` / `NotEq` bind one UUID, dereference a UUID pointer, and emit IS NULL /
+IS NOT NULL for a nil pointer. `uuid.Nil()` is a value, not SQL NULL.
+UUID slices expand to individual UUID arguments; empty lists retain the existing
+true/false predicate semantics. Comparison and LIKE builders accept UUID scalars
+(the database still decides whether an operator is valid for a UUID column).
+`In` / `NotIn` retain their documented scalar, single-element and ANY/ALL rules.
+
+UUID arguments are **preserved**, not normalized by Squirrel. This also applies to
+Expr (which does not expand slice arguments), INSERT, UPDATE and expression helpers.
+Existing driver.Valuer conversion paths are unchanged. Range retains its existing
+zero-value omission policy, so a value-form uuid.Nil() bound is omitted there.
+
+Although uuid.UUID is not a driver.Value or driver.Valuer, Go 1.27's
+[DefaultParameterConverter](https://go.dev/src/database/sql/driver/types.go)
+explicitly converts it to its canonical string; pointer conversion and nil pointers
+are also supported. Thus database/sql's default argument conversion supports it.
+A driver that overrides conversion remains responsible for its own accepted types.
+
+Native pgx v5.10.0 can encode UUIDs using its underlying-type wrapper for [16]byte;
+its UUID array codec handles slices and pointer elements. Keeping the typed values
+avoids unnecessary string conversion and preserves array binding. Regression tests
+exercise these codecs without a database, and PostgreSQL execution tests cover both
+native pgx and its database/sql adapter when POSTGRES_TEST_DSN is set.
+ANY/ALL array arguments still require driver array support; database/sql's default
+converter does not convert arbitrary slices. Applications using other drivers or
+pgx modes without a known UUID parameter type may need an explicit SQL cast
+(`?::uuid`) or a driver-specific adapter.
+
+Tests in uuid_go127_test.go verify both SQL and exact argument types/values;
+uuid_compat_test.go protects ordinary arrays, slices, bytes and Valuer conversion.
