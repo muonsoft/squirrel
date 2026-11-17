@@ -7,6 +7,8 @@ this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-17
+
 ### Fixed
 
 - Treat Go 1.27 standard-library UUIDs as scalar arguments in equality,
