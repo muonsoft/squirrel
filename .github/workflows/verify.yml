@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       GOTOOLCHAIN: local
 
@@ -60,7 +60,7 @@ jobs:
 
   minimum:
     name: Minimum supported Go
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       GOTOOLCHAIN: local
     services:
@@ -96,7 +96,7 @@ jobs:
 
   uuid:
     name: Standard UUID (Go 1.27)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       GOTOOLCHAIN: local
     services:
@@ -128,7 +128,7 @@ jobs:
 
   security:
     name: Security
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       GOTOOLCHAIN: local
     steps:

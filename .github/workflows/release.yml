@@ -24,7 +24,7 @@ jobs:
 
   validate:
     name: Validate release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       version: ${{ steps.version.outputs.version }}
       changelog_version: ${{ steps.version.outputs.changelog_version }}
@@ -83,7 +83,7 @@ jobs:
   publish:
     name: Publish GitHub Release
     needs: [validate, verify]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       release_sha: ${{ steps.release_sha.outputs.sha }}
     permissions:
@@ -184,7 +184,7 @@ jobs:
   consumer:
     name: Verify published module
     needs: [validate, publish]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     env:
